@@ -14,9 +14,17 @@ class PdfService {
   ) async {
     final doc = pw.Document();
 
-    // Load Mongolian-supporting font
-    final fontData = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
-    final ttf = pw.Font.ttf(fontData);
+    // Load Mongolian-supporting font with safe fallback on mobile
+    pw.Font ttf;
+    try {
+      final fontData = await rootBundle.load(
+        'assets/fonts/NotoSans-Regular.ttf',
+      );
+      ttf = pw.Font.ttf(fontData);
+    } catch (e) {
+      // Fallback to Helvetica if asset isn't available or rootBundle fails
+      ttf = pw.Font.helvetica();
+    }
 
     final styleTitle = pw.TextStyle(
       font: ttf,
@@ -30,6 +38,17 @@ class PdfService {
       fontSize: 11,
       fontWeight: pw.FontWeight.bold,
     );
+
+    String titleByType(PrescriptionType t) {
+      switch (t) {
+        case PrescriptionType.psychotropic:
+          return 'СЭТГЭЦЭД НӨЛӨӨЛӨХ ЭМИЙН ЖОР';
+        case PrescriptionType.narcotic:
+          return 'МАНСУУРУУЛАХ ЭМИЙН ЖОР';
+        case PrescriptionType.regular:
+          return 'ЭНГИЙН ЭМИЙН ЖОР';
+      }
+    }
 
     doc.addPage(
       pw.Page(
@@ -71,12 +90,15 @@ class PdfService {
                   children: [
                     // Title
                     pw.Center(
-                      child: pw.Text('ЭНГИЙН ЭМИЙН ЖОР', style: styleTitle),
+                      child: pw.Text(
+                        titleByType(presc.type),
+                        style: styleTitle,
+                      ),
                     ),
                     pw.SizedBox(height: 8),
                     pw.Center(
                       child: pw.Text(
-                        '....... оны ........ сарын ........',
+                        '${presc.createdAt.year} оны ${presc.createdAt.month} сарын ${presc.createdAt.day}',
                         style: style,
                       ),
                     ),
@@ -122,7 +144,10 @@ class PdfService {
                               style: style,
                             ),
                             pw.Text(
-                              'Тун: ${drug.dose}, Хэлбэр: ${drug.form}, Тоо: ${drug.quantity}',
+                              'Тун: ${drug.dose}, Хэлбэр: ${drug.form}, Тоо: ${drug.quantity}' +
+                                  (drug.treatmentDays != null
+                                      ? ', Хоног: ${drug.treatmentDays}'
+                                      : ''),
                               style: style,
                             ),
                             pw.SizedBox(height: 8),
@@ -183,15 +208,38 @@ class PdfService {
                     ],
 
                     pw.SizedBox(height: 12),
-                    pw.Text(
-                      'Жор бичсэн эмчийн нэр, утас, тэмдэг:',
-                      style: style,
-                    ),
-                    pw.SizedBox(height: 16),
-                    pw.Text(
-                      'Эмнэлгийн нэр:_____________________________________',
-                      style: style,
-                    ),
+                    // Doctor/clinic and special fields
+                    pw.SizedBox(height: 8),
+                    if (presc.doctorName != null)
+                      pw.Text(
+                        'Жор бичсэн эмч: ${presc.doctorName}${presc.doctorPhone != null ? '  Утас: ${presc.doctorPhone}' : ''}',
+                        style: style,
+                      ),
+                    if (presc.clinicName != null)
+                      pw.Text(
+                        'Эмнэлгийн нэр: ${presc.clinicName}',
+                        style: style,
+                      ),
+                    if (presc.ePrescriptionCode != null)
+                      pw.Text(
+                        'E-жор код: ${presc.ePrescriptionCode}',
+                        style: style,
+                      ),
+                    if (presc.clinicStamp == true)
+                      pw.Text('Байгууллагын тэмдэг: ТИЙМ', style: style),
+                    if (presc.generalDoctorSignature == true)
+                      pw.Text('Ерөнхий эмчийн гарын үсэг: ТИЙМ', style: style),
+                    if (presc.specialIndex != null ||
+                        presc.serialNumber != null)
+                      pw.Text(
+                        'Индекс/Серийн дугаар: ${presc.specialIndex ?? ''} / ${presc.serialNumber ?? ''}',
+                        style: style,
+                      ),
+                    if (presc.receiverName != null)
+                      pw.Text(
+                        'Хүлээн авагч: ${presc.receiverName}  РД: ${presc.receiverReg ?? ''}  Утас: ${presc.receiverPhone ?? ''}',
+                        style: style,
+                      ),
                     pw.SizedBox(height: 8),
                     pw.Divider(color: PdfColors.black),
                   ],
@@ -265,7 +313,10 @@ class PdfService {
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(4),
                           child: pw.Text(
-                            '${drug.mongolianName}\n${drug.dose}, ${drug.form}, ${drug.quantity}',
+                            '${drug.mongolianName}\n${drug.dose}, ${drug.form}, ${drug.quantity}' +
+                                (drug.treatmentDays != null
+                                    ? ', ${drug.treatmentDays} хоног'
+                                    : ''),
                             style: style,
                           ),
                         ),
@@ -311,13 +362,33 @@ class PdfService {
       ),
     );
 
-    // Show preview dialog with print/share options
-    await Printing.layoutPdf(
-      onLayout: (format) async => await doc.save(),
-      name:
-          'Жор_${patient.familyName}_${presc.createdAt.year}${presc.createdAt.month}${presc.createdAt.day}.pdf',
-      format: PdfPageFormat.a4,
-    );
+    // Show preview dialog with print/share options; fallback to share on failure
+    try {
+      await Printing.layoutPdf(
+        onLayout: (format) async => await doc.save(),
+        name:
+            'Жор_${patient.familyName}_${presc.createdAt.year}${presc.createdAt.month}${presc.createdAt.day}.pdf',
+        format: PdfPageFormat.a4,
+      );
+    } catch (e) {
+      // Some Android/iOS environments may not support inline preview (missing activities)
+      // Fallback to system share so the user can still export/print the PDF
+      try {
+        await Printing.sharePdf(
+          bytes: await doc.save(),
+          filename:
+              'Жор_${patient.familyName}_${presc.createdAt.year}${presc.createdAt.month}${presc.createdAt.day}.pdf',
+        );
+      } catch (_) {
+        // Last resort: if context is available, inform the user
+        try {
+          // ignore: use_build_context_synchronously
+          // We keep this best-effort and quiet if context isn't suitable
+          // to avoid crashing during background operations
+          // ScaffoldMessenger is in material, but we avoid importing here; caller can handle UI errors
+        } catch (_) {}
+      }
+    }
   }
 
   /// Alternative method to share PDF directly
@@ -327,9 +398,16 @@ class PdfService {
   ) async {
     final doc = pw.Document();
 
-    // Load Mongolian-supporting font
-    final fontData = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
-    final ttf = pw.Font.ttf(fontData);
+    // Load font with safe fallback
+    pw.Font ttf;
+    try {
+      final fontData = await rootBundle.load(
+        'assets/fonts/NotoSans-Regular.ttf',
+      );
+      ttf = pw.Font.ttf(fontData);
+    } catch (e) {
+      ttf = pw.Font.helvetica();
+    }
 
     final styleTitle = pw.TextStyle(
       font: ttf,

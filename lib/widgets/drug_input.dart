@@ -25,6 +25,7 @@ class _DrugInputState extends State<DrugInput> {
   late final TextEditingController _formCtrl;
   late final TextEditingController _qtyCtrl;
   late final TextEditingController _instrCtrl;
+  late final TextEditingController _daysCtrl;
 
   // Ensure Mongolian (Cyrillic) input renders by providing a font fallback.
   // NotoSans may not include all glyphs depending on the asset variant; this
@@ -53,6 +54,9 @@ class _DrugInputState extends State<DrugInput> {
     _instrCtrl = TextEditingController(
       text: widget.initial?.instructions ?? '',
     );
+    _daysCtrl = TextEditingController(
+      text: widget.initial?.treatmentDays?.toString() ?? '',
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _emit());
   }
@@ -65,11 +69,13 @@ class _DrugInputState extends State<DrugInput> {
     _formCtrl.dispose();
     _qtyCtrl.dispose();
     _instrCtrl.dispose();
+    _daysCtrl.dispose();
     super.dispose();
   }
 
   void _emit() {
     final qty = int.tryParse(_qtyCtrl.text.trim());
+    final days = int.tryParse(_daysCtrl.text.trim());
     widget.onChanged(
       Drug(
         mongolianName: _mnCtrl.text.trim(),
@@ -78,6 +84,7 @@ class _DrugInputState extends State<DrugInput> {
         form: _formCtrl.text.trim(),
         quantity: qty ?? 0,
         instructions: _instrCtrl.text.trim(),
+        treatmentDays: days,
       ),
     );
   }
@@ -163,6 +170,25 @@ class _DrugInputState extends State<DrugInput> {
                     validator: (v) => (int.tryParse(v ?? '') ?? 0) <= 0
                         ? 'Тоо зөв оруул'
                         : null,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 120,
+                  child: TextFormField(
+                    controller: _daysCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Хоног (days)',
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    style: _inputTextStyle,
+                    onChanged: (_) => _emit(),
+                    validator: (v) {
+                      final val = int.tryParse(v ?? '');
+                      if (val == null || val <= 0) return 'Хоног зөв';
+                      return null;
+                    },
                   ),
                 ),
               ],

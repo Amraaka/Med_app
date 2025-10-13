@@ -31,6 +31,21 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
   final _regNoCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
+  // Doctor/clinic fields
+  final _doctorNameCtrl = TextEditingController();
+  final _doctorPhoneCtrl = TextEditingController();
+  final _clinicNameCtrl = TextEditingController();
+  bool _clinicStamp = false;
+  bool _generalDoctorSignature = false;
+  final _ePrescriptionCodeCtrl = TextEditingController();
+  // Special (psychotropic/narcotic) fields
+  final _specialIndexCtrl = TextEditingController();
+  final _serialNumberCtrl = TextEditingController();
+  final _receiverNameCtrl = TextEditingController();
+  final _receiverRegCtrl = TextEditingController();
+  final _receiverPhoneCtrl = TextEditingController();
+  // Narcotic option
+  bool _isPalliative = false;
 
   @override
   void initState() {
@@ -53,6 +68,15 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
     _regNoCtrl.dispose();
     _phoneCtrl.dispose();
     _addressCtrl.dispose();
+    _doctorNameCtrl.dispose();
+    _doctorPhoneCtrl.dispose();
+    _clinicNameCtrl.dispose();
+    _ePrescriptionCodeCtrl.dispose();
+    _specialIndexCtrl.dispose();
+    _serialNumberCtrl.dispose();
+    _receiverNameCtrl.dispose();
+    _receiverRegCtrl.dispose();
+    _receiverPhoneCtrl.dispose();
     super.dispose();
   }
 
@@ -80,11 +104,26 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
     );
   }
 
+  int? _allowedDays() {
+    switch (_type) {
+      case PrescriptionType.psychotropic:
+        return 10;
+      case PrescriptionType.narcotic:
+        return _isPalliative ? 10 : 3;
+      case PrescriptionType.regular:
+        return null;
+    }
+  }
+
   String? _validateBusinessRules() {
     if (_drugs.isEmpty) return 'Дор хаяж нэг эм нэмнэ үү';
-    // Psychotropic/Narcotic simple constraint example
-    const psychotropicMaxDrugs = 3;
-    const narcoticMaxDrugs = 3;
+    // Max drugs per type
+    const regularMaxDrugs = 3;
+    const psychotropicMaxDrugs = 2;
+    const narcoticMaxDrugs = 1;
+    if (_type == PrescriptionType.regular && _drugs.length > regularMaxDrugs) {
+      return 'Энгийн жорт эмийн мөр $regularMaxDrugs-аас ихгүй';
+    }
     if (_type == PrescriptionType.psychotropic &&
         _drugs.length > psychotropicMaxDrugs) {
       return 'Сэтгэцэд нөлөөлөх жорт эмийн мөр $psychotropicMaxDrugs-аас ихгүй';
@@ -93,11 +132,40 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
         _drugs.length > narcoticMaxDrugs) {
       return 'Мансуурах эмийн мөр $narcoticMaxDrugs-аас ихгүй';
     }
+    // Days limits per drug for special types
+    final limit = _allowedDays();
+    if (limit != null) {
+      for (final d in _drugs) {
+        final days = d.treatmentDays ?? 0;
+        if (days <= 0 || days > limit) {
+          return 'Энэ төрлийн жорт эмийн хоног ≤ $limit байх ёстой';
+        }
+      }
+    }
     // Guardian required if patient age < 16
     if (widget.patient.age < 16) {
       if (_guardianNameCtrl.text.trim().isEmpty ||
           _guardianPhoneCtrl.text.trim().isEmpty) {
         return 'Асран хамгаалагчийн нэр, утас заавал';
+      }
+    }
+    // Doctor/clinic required
+    if (_doctorNameCtrl.text.trim().isEmpty) {
+      return 'Жор бичсэн эмчийн нэр заавал';
+    }
+    if (_clinicNameCtrl.text.trim().isEmpty) {
+      return 'Эмнэлгийн нэр заавал';
+    }
+    // Special fields required
+    if (_type == PrescriptionType.psychotropic ||
+        _type == PrescriptionType.narcotic) {
+      if (_specialIndexCtrl.text.trim().isEmpty ||
+          _serialNumberCtrl.text.trim().isEmpty) {
+        return 'Индекс болон серийн дугаар заавал';
+      }
+      if (_receiverNameCtrl.text.trim().isEmpty ||
+          _receiverRegCtrl.text.trim().isEmpty) {
+        return 'Хүлээн авагчийн нэр ба РД заавал';
       }
     }
     return null;
@@ -135,6 +203,16 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
     // Save updated patient info
     await context.read<PatientService>().savePatient(updatedPatient);
 
+    // Compute overall treatment days from per-drug values
+    final overallDays = _drugs
+        .map((d) => d.treatmentDays ?? 0)
+        .fold<int>(0, (prev, e) => e > prev ? e : prev);
+
+    // Generate ePrescriptionCode if blank
+    final eCode = _ePrescriptionCodeCtrl.text.trim().isEmpty
+        ? 'EP-${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}'
+        : _ePrescriptionCodeCtrl.text.trim();
+
     final presc = Prescription(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       patientId: widget.patient.id,
@@ -149,6 +227,34 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
       guardianPhone: widget.patient.age < 16
           ? _guardianPhoneCtrl.text.trim()
           : null,
+      treatmentDays: overallDays > 0 ? overallDays : null,
+      doctorName: _doctorNameCtrl.text.trim().isEmpty
+          ? null
+          : _doctorNameCtrl.text.trim(),
+      doctorPhone: _doctorPhoneCtrl.text.trim().isEmpty
+          ? null
+          : _doctorPhoneCtrl.text.trim(),
+      clinicName: _clinicNameCtrl.text.trim().isEmpty
+          ? null
+          : _clinicNameCtrl.text.trim(),
+      clinicStamp: _clinicStamp,
+      generalDoctorSignature: _generalDoctorSignature,
+      ePrescriptionCode: eCode,
+      specialIndex: _specialIndexCtrl.text.trim().isEmpty
+          ? null
+          : _specialIndexCtrl.text.trim(),
+      serialNumber: _serialNumberCtrl.text.trim().isEmpty
+          ? null
+          : _serialNumberCtrl.text.trim(),
+      receiverName: _receiverNameCtrl.text.trim().isEmpty
+          ? null
+          : _receiverNameCtrl.text.trim(),
+      receiverReg: _receiverRegCtrl.text.trim().isEmpty
+          ? null
+          : _receiverRegCtrl.text.trim(),
+      receiverPhone: _receiverPhoneCtrl.text.trim().isEmpty
+          ? null
+          : _receiverPhoneCtrl.text.trim(),
       createdAt: DateTime.now(),
     );
 
@@ -388,7 +494,29 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   TextButton.icon(
-                    onPressed: _addDrug,
+                    onPressed: () {
+                      final limit = () {
+                        switch (_type) {
+                          case PrescriptionType.regular:
+                            return 3;
+                          case PrescriptionType.psychotropic:
+                            return 2;
+                          case PrescriptionType.narcotic:
+                            return 1;
+                        }
+                      }();
+                      if (_drugs.length >= limit) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Энэ төрлийн жорт дээд тал нь $limit эм бичиж болно',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+                      _addDrug();
+                    },
                     icon: const Icon(Icons.add),
                     label: const Text('Эм нэмэх'),
                   ),
@@ -411,6 +539,206 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
                 ),
 
               const SizedBox(height: 16),
+
+              // Narcotic-specific option
+              if (_type == PrescriptionType.narcotic)
+                SwitchListTile(
+                  title: const Text('Паллиатив тусламж (хоног ≤ 10)'),
+                  value: _isPalliative,
+                  onChanged: (v) => setState(() => _isPalliative = v),
+                ),
+
+              // Doctor and clinic info
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Эмч ба байгууллага',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _doctorNameCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Жор бичсэн эмчийн нэр',
+                                border: OutlineInputBorder(),
+                              ),
+                              validator: (v) => (v == null || v.trim().isEmpty)
+                                  ? 'Эмчийн нэр заавал'
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              controller: _doctorPhoneCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Эмчийн утас (сонголт)',
+                                border: OutlineInputBorder(),
+                              ),
+                              keyboardType: TextInputType.phone,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _clinicNameCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Эмнэлгийн нэр',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Эмнэлгийн нэр заавал'
+                            : null,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _ePrescriptionCodeCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'E-жор код (сонголт)',
+                                hintText: 'EP-XXXX',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SwitchListTile(
+                              title: const Text('Байгууллагын тэмдэг'),
+                              contentPadding: EdgeInsets.zero,
+                              value: _clinicStamp,
+                              onChanged: (v) =>
+                                  setState(() => _clinicStamp = v),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SwitchListTile(
+                        title: const Text('Ерөнхий эмчийн гарын үсэг'),
+                        contentPadding: EdgeInsets.zero,
+                        value: _generalDoctorSignature,
+                        onChanged: (v) =>
+                            setState(() => _generalDoctorSignature = v),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Special fields for psychotropic/narcotic
+              if (_type == PrescriptionType.psychotropic ||
+                  _type == PrescriptionType.narcotic) ...[
+                Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Тусгай мэдээлэл',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _specialIndexCtrl,
+                                decoration: const InputDecoration(
+                                  labelText: 'Индекс (Index)',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (v) =>
+                                    (v == null || v.trim().isEmpty)
+                                    ? 'Индекс заавал'
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _serialNumberCtrl,
+                                decoration: const InputDecoration(
+                                  labelText: 'Серийн дугаар',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (v) =>
+                                    (v == null || v.trim().isEmpty)
+                                    ? 'Серийн дугаар заавал'
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _receiverNameCtrl,
+                                decoration: const InputDecoration(
+                                  labelText: 'Хүлээн авагчийн нэр',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (v) =>
+                                    (v == null || v.trim().isEmpty)
+                                    ? 'Нэр заавал'
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _receiverRegCtrl,
+                                decoration: const InputDecoration(
+                                  labelText: 'Хүлээн авагчийн РД',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (v) =>
+                                    (v == null || v.trim().isEmpty)
+                                    ? 'РД заавал'
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: _receiverPhoneCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Хүлээн авагчийн утас (сонголт)',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.phone,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               if (p.age < 16) ...[
                 Row(
@@ -447,6 +775,20 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 3,
+              ),
+
+              const SizedBox(height: 12),
+              Builder(
+                builder: (context) {
+                  final limit = _allowedDays();
+                  return Text(
+                    'Жор олгосон өдрөөс хойш 7 хоног хүчинтэй.' +
+                        (limit != null
+                            ? ' Энэ төрлийн жорын эмчилгээний хоног ≤ $limit.'
+                            : ''),
+                    style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                  );
+                },
               ),
 
               const SizedBox(height: 20),

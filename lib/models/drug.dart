@@ -5,6 +5,7 @@ class Drug {
   final String form; // e.g., Tablet, Syrup
   final int quantity; // number of units
   final String instructions; // Mongolian usage instructions
+  final int? treatmentDays; // duration in days for this drug
 
   Drug({
     required this.mongolianName,
@@ -13,6 +14,7 @@ class Drug {
     required this.form,
     required this.quantity,
     required this.instructions,
+    this.treatmentDays,
   });
 
   Map<String, dynamic> toMap() => {
@@ -22,6 +24,7 @@ class Drug {
     'form': form,
     'quantity': quantity,
     'instructions': instructions,
+    'treatmentDays': treatmentDays,
   };
 
   factory Drug.fromMap(Map<String, dynamic> map) => Drug(
@@ -31,5 +34,6 @@ class Drug {
     form: (map['form'] ?? '') as String,
     quantity: (map['quantity'] ?? 0) as int,
     instructions: (map['instructions'] ?? '') as String,
+    treatmentDays: (map['treatmentDays'] as num?)?.toInt(),
   );
 }
