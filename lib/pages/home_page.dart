@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/patient_provider.dart';
+import '../services/patient_service.dart';
+import '../services/prescription_service.dart';
+import '../models/patient.dart';
+import 'select_patient_page.dart';
+import 'prescription_form_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -8,11 +12,14 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final patientCount = context.watch<PatientProvider>().patients.length;
+    final patientCount = context.watch<PatientService>().patients.length;
+    final recent = context
+        .watch<PrescriptionService>()
+        .getRecentPrescriptions();
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
+        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
         title: const Text('Medical Dashboard'),
         elevation: 0,
       ),
@@ -61,31 +68,66 @@ class HomePage extends StatelessWidget {
 
             const SizedBox(height: 32),
 
-            // Quick Actions
+            // Recent prescriptions
             Text(
-              'Quick Actions',
+              'Сүүлийн жорууд',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            if (recent.isEmpty)
+              Text(
+                'Одоогоор жор байхгүй',
+                style: TextStyle(color: Colors.grey[600]),
+              )
+            else
+              Expanded(
+                child: ListView.separated(
+                  itemCount: recent.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, i) {
+                    final r = recent[i];
+                    final patient = context
+                        .read<PatientService>()
+                        .patients
+                        .firstWhere(
+                          (p) => p.id == r.patientId,
+                          orElse: () => Patient(
+                            id: '',
+                            familyName: '',
+                            givenName: '',
+                            birthDate: DateTime(1990),
+                            registrationNumber: '',
+                            sex: Sex.male,
+                            phone: '',
+                            address: '',
+                            diagnosis: '',
+                            icd: '',
+                          ),
+                        );
+                    final topDrug = r.drugs.isNotEmpty
+                        ? r.drugs.first.mongolianName
+                        : '-';
+                    return ListTile(
+                      leading: Icon(
+                        Icons.picture_as_pdf,
+                        color: theme.colorScheme.primary,
+                      ),
+                      title: Text('${patient.fullName} • $topDrug'),
+                      subtitle: Text(
+                        '${r.createdAt.year}-${r.createdAt.month.toString().padLeft(2, '0')}-${r.createdAt.day.toString().padLeft(2, '0')}  •  ${r.type.name}',
+                      ),
+                      onTap: () {},
+                    );
+                  },
+                ),
+              ),
 
-            _buildActionCard(
-              context: context,
-              title: 'New Prescription',
-              subtitle: 'Add prescription for new or existing patient',
-              icon: Icons.add_box,
-              color: theme.colorScheme.secondary,
-              onTap: () {
-                // Navigate to Profile tab where the patient selection is
-                final mainScreen = context.findAncestorStateOfType<State>();
-                if (mainScreen != null && mainScreen.mounted) {
-                  // This will switch to profile tab - we'll implement this in main.dart
-                }
-              },
-            ),
+            // Quick Actions
+            const SizedBox(height: 16),
 
             const SizedBox(height: 12),
 
@@ -102,6 +144,27 @@ class HomePage extends StatelessWidget {
           ],
         ),
       ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 106.0),
+        child: FloatingActionButton.extended(
+          onPressed: () async {
+            final selected = await Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SelectPatientPage()),
+            );
+            if (!context.mounted) return;
+            if (selected is Patient) {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PrescriptionFormPage(patient: selected),
+                ),
+              );
+            }
+          },
+
+          icon: const Icon(Icons.add),
+          label: const Text('Шинэ жор бичих'),
+        ),
+      ),
     );
   }
 
@@ -114,9 +177,9 @@ class HomePage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,7 +221,7 @@ class HomePage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(icon, color: color, size: 24),

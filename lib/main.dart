@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'pages/home_page.dart';
 import 'pages/profile_page.dart';
-import 'app_theme.dart';
-import 'package:provider/provider.dart';
-import 'providers/patient_provider.dart';
-import 'services/patient_repository.dart';
+import 'services/patient_service.dart';
+import 'services/prescription_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,19 +16,30 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<PatientProvider>(
-          create: (_) => PatientProvider(PatientRepository())..load(),
+        ChangeNotifierProvider(create: (_) => PatientService()..loadPatients()),
+        // PrescriptionService manages all prescription data
+        ChangeNotifierProvider(
+          create: (_) => PrescriptionService()..loadPrescriptions(),
         ),
       ],
       child: MaterialApp(
         title: 'Med App',
-        theme: AppTheme.lightTheme,
+        // App theme with teal primary color and coral accent
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF008B8B), // Teal
+            secondary: const Color(0xFFE55A52), // Coral
+          ),
+          useMaterial3: true,
+          fontFamily: 'NotoSans',
+        ),
         home: const MainScreen(),
       ),
     );
   }
 }
 
+/// Main screen with bottom navigation bar
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -38,19 +48,23 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  // Track which page is currently selected (0 = Home, 1 = Profile)
   int _selectedIndex = 0;
 
+  // List of pages to display
   static final List<Widget> _pages = <Widget>[
-    const HomePage(),
-    const ProfilePage(),
+    const HomePage(), // Dashboard
+    const ProfilePage(), // Doctor profile & current patient
   ];
 
+  /// Handle navigation bar item tap
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
+  /// Helper method to switch to profile page
   void switchToProfile() {
     setState(() => _selectedIndex = 1);
   }
