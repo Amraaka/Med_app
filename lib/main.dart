@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'pages/home_page.dart';
 import 'pages/profile_page.dart';
+import 'app_theme.dart';
+import 'package:provider/provider.dart';
+import 'providers/patient_provider.dart';
+import 'services/patient_repository.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,14 +15,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Med App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-        fontFamily: 'Roboto',
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<PatientProvider>(
+          create: (_) => PatientProvider(PatientRepository())..load(),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Med App',
+        theme: AppTheme.lightTheme,
+        home: const MainScreen(),
       ),
-      home: const MainScreen(),
     );
   }
 }
@@ -44,6 +51,10 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  void switchToProfile() {
+    setState(() => _selectedIndex = 1);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,11 +64,12 @@ class _MainScreenState extends State<MainScreen> {
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 30),
         height: 68,
         decoration: BoxDecoration(
-          color: const Color(0xFF2D2D2D),
+          color: Colors.white,
           borderRadius: BorderRadius.circular(34),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              // ignore: deprecated_member_use
+              color: Colors.black.withOpacity(0.08),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -72,6 +84,9 @@ class _MainScreenState extends State<MainScreen> {
               label: 'Home',
               isSelected: _selectedIndex == 0,
               onTap: () => _onItemTapped(0),
+              primaryColor: const Color(0xFF008B8B),
+              accentColor: const Color(0xFFE55A52),
+              secondaryColor: Colors.grey,
             ),
             _buildNavItem(
               icon: Icons.person_outline,
@@ -79,6 +94,9 @@ class _MainScreenState extends State<MainScreen> {
               label: 'Profile',
               isSelected: _selectedIndex == 1,
               onTap: () => _onItemTapped(1),
+              primaryColor: const Color(0xFF008B8B),
+              accentColor: const Color(0xFFE55A52),
+              secondaryColor: Colors.grey,
             ),
           ],
         ),
@@ -92,6 +110,9 @@ class _MainScreenState extends State<MainScreen> {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
+    required Color primaryColor,
+    required Color accentColor,
+    required Color secondaryColor,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -100,9 +121,7 @@ class _MainScreenState extends State<MainScreen> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFFE55A52) // Coral/red color from the image
-              : Colors.transparent,
+          color: isSelected ? accentColor : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
         ),
         child: Row(
@@ -110,7 +129,7 @@ class _MainScreenState extends State<MainScreen> {
           children: [
             Icon(
               isSelected ? selectedIcon : icon,
-              color: isSelected ? Colors.white : Colors.white.withOpacity(0.7),
+              color: isSelected ? Colors.white : primaryColor,
               size: 22,
             ),
             if (isSelected) ...[
@@ -120,7 +139,7 @@ class _MainScreenState extends State<MainScreen> {
                 opacity: isSelected ? 1.0 : 0.0,
                 child: Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
