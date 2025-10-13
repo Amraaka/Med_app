@@ -48,4 +48,18 @@ class PrescriptionService extends ChangeNotifier {
   List<Prescription> getPrescriptionsByPatient(String patientId) {
     return _prescriptions.where((p) => p.patientId == patientId).toList();
   }
+
+  /// Delete a prescription
+  Future<void> deletePrescription(String prescriptionId) async {
+    _prescriptions.removeWhere((p) => p.id == prescriptionId);
+    await _savePrescriptions();
+    notifyListeners();
+  }
+
+  /// Delete all prescriptions for a patient
+  Future<void> deletePrescriptionsByPatient(String patientId) async {
+    _prescriptions.removeWhere((p) => p.patientId == patientId);
+    await _savePrescriptions();
+    notifyListeners();
+  }
 }

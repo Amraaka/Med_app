@@ -7,8 +7,9 @@ class Patient {
   final String familyName; // Овог
   final String givenName; // Нэр
   final DateTime birthDate; // Төрсөн огноо
-  final String registrationNumber; // Регистрийн дугаар
   final Sex sex; // Хүйс
+  // Optional fields - collected when creating prescription
+  final String registrationNumber; // Регистрийн дугаар
   final String phone; // Утас
   final String address; // Хаяг
   final String diagnosis; // Онош (Mongolian)
@@ -19,12 +20,12 @@ class Patient {
     required this.familyName,
     required this.givenName,
     required this.birthDate,
-    required this.registrationNumber,
     required this.sex,
-    required this.phone,
-    required this.address,
-    required this.diagnosis,
-    required this.icd,
+    this.registrationNumber = '',
+    this.phone = '',
+    this.address = '',
+    this.diagnosis = '',
+    this.icd = '',
   });
 
   String get fullName => '$familyName $givenName';

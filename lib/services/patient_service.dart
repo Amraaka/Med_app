@@ -5,10 +5,8 @@ import '../models/patient.dart';
 /// Simple service to manage patients - combines data storage and state management
 class PatientService extends ChangeNotifier {
   List<Patient> _patients = [];
-  Patient? _currentPatient;
 
   List<Patient> get patients => _patients;
-  Patient? get currentPatient => _currentPatient;
 
   /// Load all patients from storage
   Future<void> loadPatients() async {
@@ -34,13 +32,13 @@ class PatientService extends ChangeNotifier {
       _patients.add(patient);
     }
     await _savePatients();
-    _currentPatient = patient;
     notifyListeners();
   }
 
-  /// Set the current patient
-  void setCurrentPatient(Patient? patient) {
-    _currentPatient = patient;
+  /// Delete a patient
+  Future<void> deletePatient(String patientId) async {
+    _patients.removeWhere((p) => p.id == patientId);
+    await _savePatients();
     notifyListeners();
   }
 }

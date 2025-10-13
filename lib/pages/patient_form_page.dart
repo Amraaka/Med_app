@@ -14,12 +14,7 @@ class _PatientFormPageState extends State<PatientFormPage> {
   final _familyCtrl = TextEditingController();
   final _givenCtrl = TextEditingController();
   DateTime? _birthDate;
-  final _regNoCtrl = TextEditingController();
   Sex _sex = Sex.male;
-  final _phoneCtrl = TextEditingController();
-  final _addressCtrl = TextEditingController();
-  final _diagnosisCtrl = TextEditingController();
-  final _icdCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -29,12 +24,7 @@ class _PatientFormPageState extends State<PatientFormPage> {
       _familyCtrl.text = widget.existing!.familyName;
       _givenCtrl.text = widget.existing!.givenName;
       _birthDate = widget.existing!.birthDate;
-      _regNoCtrl.text = widget.existing!.registrationNumber;
       _sex = widget.existing!.sex;
-      _phoneCtrl.text = widget.existing!.phone;
-      _addressCtrl.text = widget.existing!.address;
-      _diagnosisCtrl.text = widget.existing!.diagnosis;
-      _icdCtrl.text = widget.existing!.icd;
     }
   }
 
@@ -42,11 +32,6 @@ class _PatientFormPageState extends State<PatientFormPage> {
   void dispose() {
     _familyCtrl.dispose();
     _givenCtrl.dispose();
-    _regNoCtrl.dispose();
-    _phoneCtrl.dispose();
-    _addressCtrl.dispose();
-    _diagnosisCtrl.dispose();
-    _icdCtrl.dispose();
     super.dispose();
   }
 
@@ -66,12 +51,7 @@ class _PatientFormPageState extends State<PatientFormPage> {
       familyName: _familyCtrl.text.trim(),
       givenName: _givenCtrl.text.trim(),
       birthDate: _birthDate!,
-      registrationNumber: _regNoCtrl.text.trim(),
       sex: _sex,
-      phone: _phoneCtrl.text.trim(),
-      address: _addressCtrl.text.trim(),
-      diagnosis: _diagnosisCtrl.text.trim(),
-      icd: _icdCtrl.text.trim(),
     );
     // Just return the patient - the service will save it
     if (!mounted) return;
@@ -81,7 +61,7 @@ class _PatientFormPageState extends State<PatientFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Patient Details')),
+      appBar: AppBar(title: const Text('Шинэ өвчтөн бүртгэх')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -165,81 +145,29 @@ class _PatientFormPageState extends State<PatientFormPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _regNoCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Регистрийн дугаар (Registration Number)',
-                  border: OutlineInputBorder(),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.blue.shade200),
                 ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'РД заавал';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _phoneCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Утас (Phone)',
-                        border: OutlineInputBorder(),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Бусад мэдээлэл (РД, утас, хаяг, онош) жор бичихэд асуугдана',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.blue.shade700,
+                        ),
                       ),
-                      keyboardType: TextInputType.phone,
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Утасны дугаар заавал';
-                        final cleaned = v.replaceAll(RegExp(r'[^0-9+]'), '');
-                        if (cleaned.length < 6) return 'Утасны дугаар буруу';
-                        return null;
-                      },
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _icdCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'ICD код',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'ICD-10 код заавал';
-                        final cleaned = v.trim().toUpperCase();
-                        if (!RegExp(r'^[A-Z][0-9]{2}(\.[0-9A-Z]{1,4})?$').hasMatch(cleaned)) {
-                          return 'ICD-10 код буруу (ж: J06.9)';
-                        }
-                        return null;
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _addressCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Хаяг (Address)',
-                  border: OutlineInputBorder(),
+                  ],
                 ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Хаяг заавал';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _diagnosisCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Онош (Diagnosis - Mongolian)',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 2,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Онош заавал';
-                  return null;
-                },
               ),
               const SizedBox(height: 20),
               SizedBox(

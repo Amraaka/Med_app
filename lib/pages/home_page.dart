@@ -2,150 +2,200 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/patient_service.dart';
 import '../services/prescription_service.dart';
+import '../services/pdf_service.dart';
 import '../models/patient.dart';
+import '../models/prescription.dart';
 import 'select_patient_page.dart';
 import 'prescription_form_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  String _searchQuery = '';
+  PrescriptionType? _filterType;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final patientCount = context.watch<PatientService>().patients.length;
-    final recent = context
-        .watch<PrescriptionService>()
-        .getRecentPrescriptions();
+    final prescriptionService = context.watch<PrescriptionService>();
+    final patientService = context.watch<PatientService>();
+
+    final allPrescriptions = prescriptionService.prescriptions;
+    final filteredPrescriptions = allPrescriptions.where((presc) {
+      if (_filterType != null && presc.type != _filterType) return false;
+
+      if (_searchQuery.isNotEmpty) {
+        final patient = patientService.patients.firstWhere(
+          (p) => p.id == presc.patientId,
+          orElse: () => Patient(
+            id: '',
+            familyName: '',
+            givenName: '',
+            birthDate: DateTime(1990),
+            registrationNumber: '',
+            sex: Sex.male,
+            phone: '',
+            address: '',
+            diagnosis: '',
+            icd: '',
+          ),
+        );
+        final searchLower = _searchQuery.toLowerCase();
+        return patient.fullName.toLowerCase().contains(searchLower) ||
+            presc.diagnosis.toLowerCase().contains(searchLower) ||
+            presc.drugs.any(
+              (d) =>
+                  d.mongolianName.toLowerCase().contains(searchLower) ||
+                  d.latinName.toLowerCase().contains(searchLower),
+            );
+      }
+      return true;
+    }).toList();
 
     return Scaffold(
       appBar: AppBar(
         backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-        title: const Text('Medical Dashboard'),
+        title: const Text('Жорын бүртгэл'),
         elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Welcome, Dr. Smith',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: TextField(
+              onChanged: (value) => setState(() => _searchQuery = value),
+              decoration: InputDecoration(
+                hintText: 'Өвчтөн, онош, эм хайх...',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Manage prescriptions and patient records',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 32),
-
-            // Stats Cards
-            Row(
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          Container(
+            height: 56,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
               children: [
-                Expanded(
-                  child: _buildStatCard(
-                    title: 'Total Patients',
-                    value: patientCount.toString(),
-                    icon: Icons.people,
-                    color: theme.colorScheme.primary,
+                FilterChip(
+                  label: const Text('Бүгд'),
+                  selected: _filterType == null,
+                  onSelected: (_) => setState(() => _filterType = null),
+                ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  label: const Text('Энгийн'),
+                  selected: _filterType == PrescriptionType.regular,
+                  onSelected: (_) =>
+                      setState(() => _filterType = PrescriptionType.regular),
+                ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  label: const Text('Сэтгэц'),
+                  selected: _filterType == PrescriptionType.psychotropic,
+                  onSelected: (_) => setState(
+                    () => _filterType = PrescriptionType.psychotropic,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildStatCard(
-                    title: 'Prescriptions',
-                    value: patientCount.toString(),
-                    icon: Icons.medical_services,
-                    color: theme.colorScheme.secondary,
+                const SizedBox(width: 8),
+                FilterChip(
+                  label: const Text('Мансуурах'),
+                  selected: _filterType == PrescriptionType.narcotic,
+                  onSelected: (_) =>
+                      setState(() => _filterType = PrescriptionType.narcotic),
+                ),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Text(
+                  '${filteredPrescriptions.length} жор',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
+          ),
 
-            const SizedBox(height: 32),
-
-            // Recent prescriptions
-            Text(
-              'Сүүлийн жорууд',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (recent.isEmpty)
-              Text(
-                'Одоогоор жор байхгүй',
-                style: TextStyle(color: Colors.grey[600]),
-              )
-            else
-              Expanded(
-                child: ListView.separated(
-                  itemCount: recent.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, i) {
-                    final r = recent[i];
-                    final patient = context
-                        .read<PatientService>()
-                        .patients
-                        .firstWhere(
-                          (p) => p.id == r.patientId,
-                          orElse: () => Patient(
-                            id: '',
-                            familyName: '',
-                            givenName: '',
-                            birthDate: DateTime(1990),
-                            registrationNumber: '',
-                            sex: Sex.male,
-                            phone: '',
-                            address: '',
-                            diagnosis: '',
-                            icd: '',
+          Expanded(
+            child: filteredPrescriptions.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.description_outlined,
+                          size: 64,
+                          color: Colors.grey[300],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          _searchQuery.isNotEmpty || _filterType != null
+                              ? 'Жор олдсонгүй'
+                              : 'Жор байхгүй байна',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
                           ),
-                        );
-                    final topDrug = r.drugs.isNotEmpty
-                        ? r.drugs.first.mongolianName
-                        : '-';
-                    return ListTile(
-                      leading: Icon(
-                        Icons.picture_as_pdf,
-                        color: theme.colorScheme.primary,
-                      ),
-                      title: Text('${patient.fullName} • $topDrug'),
-                      subtitle: Text(
-                        '${r.createdAt.year}-${r.createdAt.month.toString().padLeft(2, '0')}-${r.createdAt.day.toString().padLeft(2, '0')}  •  ${r.type.name}',
-                      ),
-                      onTap: () {},
-                    );
-                  },
-                ),
-              ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: filteredPrescriptions.length,
+                    itemBuilder: (context, index) {
+                      final presc = filteredPrescriptions[index];
+                      final patient = patientService.patients.firstWhere(
+                        (p) => p.id == presc.patientId,
+                        orElse: () => Patient(
+                          id: '',
+                          familyName: 'Устгагдсан',
+                          givenName: 'өвчтөн',
+                          birthDate: DateTime(1990),
+                          registrationNumber: '',
+                          sex: Sex.male,
+                          phone: '',
+                          address: '',
+                          diagnosis: '',
+                          icd: '',
+                        ),
+                      );
 
-            // Quick Actions
-            const SizedBox(height: 16),
-
-            const SizedBox(height: 12),
-
-            _buildActionCard(
-              context: context,
-              title: 'Patient Records',
-              subtitle: 'View and manage patient history',
-              icon: Icons.folder_shared,
-              color: theme.colorScheme.primary,
-              onTap: () {
-                // Switch to Profile tab
-              },
-            ),
-          ],
-        ),
+                      return _buildPrescriptionCard(
+                        context,
+                        theme,
+                        presc,
+                        patient,
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 106.0),
+        padding: const EdgeInsets.only(bottom: 100.0),
         child: FloatingActionButton.extended(
           onPressed: () async {
             final selected = await Navigator.of(context).push(
@@ -160,97 +210,253 @@ class HomePage extends StatelessWidget {
               );
             }
           },
-
           icon: const Icon(Icons.add),
-          label: const Text('Шинэ жор бичих'),
+          label: const Text('Шинэ жор'),
         ),
       ),
     );
   }
 
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required IconData icon,
-    required Color color,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          Text(title, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionCard({
-    required BuildContext context,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildPrescriptionCard(
+    BuildContext context,
+    ThemeData theme,
+    Prescription presc,
+    Patient patient,
+  ) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: onTap,
+        onTap: () async {
+          await PdfService.showPrescriptionPdf(context, patient, presc);
+        },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+              Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.1,
+                    ),
+                    child: Text(
+                      patient.givenName.isNotEmpty
+                          ? patient.givenName[0].toUpperCase()
+                          : 'P',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          patient.fullName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          '${patient.age} нас • ${patient.sex.name}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _getTypeColor(
+                            presc.type,
+                          ).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _getTypeLabel(presc.type),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _getTypeColor(presc.type),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _formatDate(presc.createdAt),
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+              const SizedBox(height: 12),
+              Text(
+                'Онош: ${presc.diagnosis}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'ICD: ${presc.icd}',
+                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: presc.drugs.take(3).map((drug) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.medication,
+                          size: 14,
+                          color: Colors.grey[700],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          drug.mongolianName,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+              if (presc.drugs.length > 3)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '+${presc.drugs.length - 3} бусад эм',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    onPressed: () async {
+                      await PdfService.showPrescriptionPdf(
+                        context,
+                        patient,
+                        presc,
+                      );
+                    },
+                    icon: const Icon(Icons.picture_as_pdf, size: 16),
+                    label: const Text('PDF', style: TextStyle(fontSize: 12)),
+                  ),
+                  TextButton.icon(
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Жор устгах уу?'),
+                          content: Text(
+                            '${patient.fullName}-н жорыг устгах уу?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Үгүй'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              child: const Text('Устгах'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        if (!context.mounted) return;
+                        await context
+                            .read<PrescriptionService>()
+                            .deletePrescription(presc.id);
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Жор устгагдлаа')),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.delete, size: 16, color: Colors.red),
+                    label: const Text(
+                      'Устгах',
+                      style: TextStyle(fontSize: 12, color: Colors.red),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _getTypeLabel(PrescriptionType type) {
+    switch (type) {
+      case PrescriptionType.regular:
+        return 'Энгийн';
+      case PrescriptionType.psychotropic:
+        return 'Сэтгэц';
+      case PrescriptionType.narcotic:
+        return 'Мансуурах';
+    }
+  }
+
+  Color _getTypeColor(PrescriptionType type) {
+    switch (type) {
+      case PrescriptionType.regular:
+        return Colors.blue;
+      case PrescriptionType.psychotropic:
+        return Colors.orange;
+      case PrescriptionType.narcotic:
+        return Colors.red;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
   }
 }

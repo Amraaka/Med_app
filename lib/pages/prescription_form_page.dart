@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/drug.dart';
 import '../models/patient.dart';
 import '../models/prescription.dart';
+import '../services/patient_service.dart';
 import '../services/prescription_service.dart';
 import '../services/pdf_service.dart';
 import '../widgets/drug_input.dart';
@@ -26,13 +27,20 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
   final _guardianPhoneCtrl = TextEditingController();
   final _diagnosisCtrl = TextEditingController();
   final _icdCtrl = TextEditingController();
+  // Patient info fields
+  final _regNoCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _addressCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    // Prefill with patient's existing diagnosis and ICD to streamline workflow
+    // Prefill with patient's existing data if available
     _diagnosisCtrl.text = widget.patient.diagnosis;
     _icdCtrl.text = widget.patient.icd;
+    _regNoCtrl.text = widget.patient.registrationNumber;
+    _phoneCtrl.text = widget.patient.phone;
+    _addressCtrl.text = widget.patient.address;
   }
 
   @override
@@ -42,6 +50,9 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
     _guardianPhoneCtrl.dispose();
     _diagnosisCtrl.dispose();
     _icdCtrl.dispose();
+    _regNoCtrl.dispose();
+    _phoneCtrl.dispose();
+    _addressCtrl.dispose();
     super.dispose();
   }
 
@@ -102,15 +113,33 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
       return;
     }
 
+    // Update patient information if any fields were filled
+    final updatedPatient = widget.patient.copyWith(
+      registrationNumber: _regNoCtrl.text.trim().isNotEmpty
+          ? _regNoCtrl.text.trim()
+          : widget.patient.registrationNumber,
+      phone: _phoneCtrl.text.trim().isNotEmpty
+          ? _phoneCtrl.text.trim()
+          : widget.patient.phone,
+      address: _addressCtrl.text.trim().isNotEmpty
+          ? _addressCtrl.text.trim()
+          : widget.patient.address,
+      diagnosis: _diagnosisCtrl.text.trim().isNotEmpty
+          ? _diagnosisCtrl.text.trim()
+          : widget.patient.diagnosis,
+      icd: _icdCtrl.text.trim().isNotEmpty
+          ? _icdCtrl.text.trim()
+          : widget.patient.icd,
+    );
+
+    // Save updated patient info
+    await context.read<PatientService>().savePatient(updatedPatient);
+
     final presc = Prescription(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       patientId: widget.patient.id,
-      diagnosis: _diagnosisCtrl.text.trim().isEmpty
-          ? widget.patient.diagnosis
-          : _diagnosisCtrl.text.trim(),
-      icd: _icdCtrl.text.trim().isEmpty
-          ? widget.patient.icd
-          : _icdCtrl.text.trim(),
+      diagnosis: _diagnosisCtrl.text.trim(),
+      icd: _icdCtrl.text.trim(),
       type: _type,
       drugs: _drugs,
       notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
@@ -125,8 +154,8 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
 
     await context.read<PrescriptionService>().savePrescription(presc);
 
-    // Generate and preview PDF
-    await PdfService.showPrescriptionPdf(context, widget.patient, presc);
+    // Generate and preview PDF using updated patient info
+    await PdfService.showPrescriptionPdf(context, updatedPatient, presc);
 
     if (!mounted) return;
     Navigator.of(context).pop(presc);
@@ -146,14 +175,134 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
             children: [
               // Patient summary
               Card(
-                child: ListTile(
-                  title: Text('${p.fullName} • ${p.age} настай'),
-                  subtitle: Text(
-                    '${p.registrationNumber} • ${p.phone}\n${p.address}',
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${p.fullName} • ${p.age} настай • ${p.sex.name}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (p.registrationNumber.isNotEmpty ||
+                          p.phone.isNotEmpty ||
+                          p.address.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          [
+                            if (p.registrationNumber.isNotEmpty)
+                              'РД: ${p.registrationNumber}',
+                            if (p.phone.isNotEmpty) 'Утас: ${p.phone}',
+                          ].join(' • '),
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        if (p.address.isNotEmpty)
+                          Text(
+                            'Хаяг: ${p.address}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                      ],
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+
+              // Patient info fields (if not yet filled)
+              if (p.registrationNumber.isEmpty ||
+                  p.phone.isEmpty ||
+                  p.address.isEmpty) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.shade200),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber,
+                            color: Colors.orange.shade700,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Өвчтний бүрэн мэдээллийг оруулна уу',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orange.shade900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _regNoCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Регистрийн дугаар (РД)',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'РД заавал';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _phoneCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Утасны дугаар',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        keyboardType: TextInputType.phone,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty)
+                            return 'Утас заавал';
+                          final cleaned = v.replaceAll(RegExp(r'[^0-9+]'), '');
+                          if (cleaned.length < 6) return 'Утас буруу';
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _addressCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Хаяг',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty)
+                            return 'Хаяг заавал';
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
 
               // Prescription type
               InputDecorator(
