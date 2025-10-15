@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/patient_service.dart';
-import '../services/prescription_service.dart';
+import '../services.dart';
 import '../services/pdf_service.dart';
-import '../models/patient.dart';
-import '../models/prescription.dart';
+import '../models.dart';
 import 'select_patient_page.dart';
 import 'prescription_form_page.dart';
 
@@ -49,9 +47,7 @@ class _HomePageState extends State<HomePage> {
         return patient.fullName.toLowerCase().contains(searchLower) ||
             presc.diagnosis.toLowerCase().contains(searchLower) ||
             presc.drugs.any(
-              (d) =>
-                  d.mongolianName.toLowerCase().contains(searchLower) ||
-                  d.latinName.toLowerCase().contains(searchLower),
+              (d) => d.mongolianName.toLowerCase().contains(searchLower),
             );
       }
       return true;

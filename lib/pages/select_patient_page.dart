@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/patient.dart';
-import '../services/patient_service.dart';
+import '../models.dart';
+import '../services.dart';
 import 'patient_form_page.dart';
 
 class SelectPatientPage extends StatelessWidget {

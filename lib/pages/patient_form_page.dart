@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/patient.dart';
+import '../models.dart';
 
 class PatientFormPage extends StatefulWidget {
   const PatientFormPage({super.key, this.existing});
@@ -38,9 +38,9 @@ class _PatientFormPageState extends State<PatientFormPage> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_birthDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Төрсөн огноо сонгоно уу')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Төрсөн огноо сонгоно уу')));
       return;
     }
     // Generate a simple unique id when creating a new patient
@@ -155,7 +155,11 @@ class _PatientFormPageState extends State<PatientFormPage> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.blue.shade700, size: 20),
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.blue.shade700,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(

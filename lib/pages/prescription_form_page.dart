@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../models/drug.dart';
-import '../models/patient.dart';
-import '../models/prescription.dart';
-import '../services/patient_service.dart';
-import '../services/prescription_service.dart';
+import '../models.dart';
+import '../services.dart';
 import '../services/pdf_service.dart';
-import '../widgets/drug_input.dart';
+import '../widgets.dart';
 
 class PrescriptionFormPage extends StatefulWidget {
   const PrescriptionFormPage({super.key, required this.patient});
@@ -94,7 +91,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
       () => _drugs.add(
         Drug(
           mongolianName: '',
-          latinName: '',
           dose: '',
           form: '',
           quantity: 0,

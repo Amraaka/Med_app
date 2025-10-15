@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/patient_service.dart';
-import '../services/prescription_service.dart';
-// import '../services/pdf_service.dart';
-// import '../models/patient.dart';
+import '../services.dart';
 import 'patient_form_page.dart';
-// import 'prescription_form_page.dart';
 import 'patient_detail_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -179,8 +175,4 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-
-  // Details moved to PatientDetailPage
-
-  // Helpers moved to PatientDetailPage
 }

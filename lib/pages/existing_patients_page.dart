@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/patient_service.dart';
+import '../services.dart';
 
 class ExistingPatientsPage extends StatelessWidget {
   const ExistingPatientsPage({super.key});
