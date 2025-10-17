@@ -20,9 +20,13 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => PrescriptionService()..loadPrescriptions(),
         ),
+        ChangeNotifierProvider(
+          create: (_) => DoctorProfileService()..loadProfile(),
+        ),
       ],
       child: MaterialApp(
         title: 'Med App',
+        debugShowCheckedModeBanner: false,
         theme: _buildAppTheme(),
         home: const MainScreen(),
       ),
@@ -69,9 +73,8 @@ class _MainScreenState extends State<MainScreen> {
 }
 
 ThemeData _buildAppTheme() {
-  // Minimal theme for a small app, keeping your palette
-  const baseBackground = Color(0xFFE0F5F4); // mint background
-  const accent = Color(0xFF00B8A9); // teal accent
+  const baseBackground = Color(0xFFE0F5F4);
+  const accent = Color(0xFF00B8A9);
 
   final scheme = ColorScheme.fromSeed(
     seedColor: accent,

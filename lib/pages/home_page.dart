@@ -56,7 +56,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-        title: const Text('Жорын бүртгэл'),
+        title: const Text('Бүртгэлтэй жорууд'),
         elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
@@ -191,7 +191,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 100.0),
+        padding: const EdgeInsets.only(bottom: 120.0),
         child: FloatingActionButton.extended(
           onPressed: () async {
             final selected = await Navigator.of(context).push(

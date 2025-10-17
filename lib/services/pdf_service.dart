@@ -1,13 +1,25 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-
 import '../models.dart';
 
 class PdfService {
-  // Public API: Preview
+  static final PdfPageFormat prescriptionFormat = PdfPageFormat(
+    99 * PdfPageFormat.mm,
+    215 * PdfPageFormat.mm,
+    marginAll: 0,
+  );
+
+  // ====== Constants ======
+  static const String _headerText1 =
+      'Эрүүл мэндийн сайдын 2019 оны 12 дугаар сарын 30-ны өдрийн';
+  static const String _headerText2 =
+      'А/611 дугаар тушаалын арваннэгдүгээр хавсралт';
+  static const String _headerText3 = 'Эрүүл мэндийн бүртгэлийн маягт АМ-9А';
+
   static Future<void> showPrescriptionPdf(
     context,
     Patient patient,
@@ -19,15 +31,14 @@ class PdfService {
       await Printing.layoutPdf(
         onLayout: (_) async => bytes,
         name: filename,
-        format: PdfPageFormat.a4,
+        format: prescriptionFormat,
+        usePrinterSettings: false, // Show at actual prescription size
       );
     } catch (e) {
-      // Fallback to share if preview isn't available
       await Printing.sharePdf(bytes: bytes, filename: filename);
     }
   }
 
-  // Public API: Direct Share
   static Future<void> sharePrescriptionPdf(
     Patient patient,
     Prescription presc,
@@ -39,17 +50,121 @@ class PdfService {
     );
   }
 
-  // ---------- Internals ----------
+  /// Optional: Preview on an A4 sheet with the prescription centered.
+  /// This doesn't change the prescription size; it only wraps it on A4 for printers
+  /// that don't support custom paper sizes.
+  static Future<void> showPrescriptionOnA4(
+    context,
+    Patient patient,
+    Prescription presc, {
+    bool centered = true,
+  }) async {
+    final doc = pw.Document();
+    final ttf = await _loadMongolianFont();
+
+    final styleTitle = pw.TextStyle(
+      font: ttf,
+      fontSize: 12,
+      fontWeight: pw.FontWeight.bold,
+    );
+    final styleSmall = pw.TextStyle(font: ttf, fontSize: 6.5);
+    final style = pw.TextStyle(font: ttf, fontSize: 8);
+    final styleBold = pw.TextStyle(
+      font: ttf,
+      fontSize: 8,
+      fontWeight: pw.FontWeight.bold,
+    );
+
+    // Determine stripe color based on prescription type (optional on A4)
+    PdfColor? stripeColor;
+    if (presc.type == PrescriptionType.psychotropic) {
+      stripeColor = PdfColors.green;
+    } else if (presc.type == PrescriptionType.narcotic) {
+      stripeColor = PdfColors.yellow;
+    }
+
+    // Build the same content we use for the fixed-size page
+    final body = pw.Padding(
+      padding: const pw.EdgeInsets.all(6),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+        children: [
+          _buildTopHeader(styleSmall),
+          pw.SizedBox(height: 3),
+          _buildPrescriptionBox(patient, presc, styleTitle, style, styleBold),
+          pw.SizedBox(height: 3),
+          _buildBottomTable(presc, style, styleBold),
+        ],
+      ),
+    );
+
+    // Create an A4 page and place the prescription in a fixed-size container
+    final card = pw.Container(
+      width: 99 * PdfPageFormat.mm,
+      height: 215 * PdfPageFormat.mm,
+      color: PdfColors.black,
+      child: pw.Stack(
+        children: [
+          if (stripeColor != null)
+            // draw stripe over the card area (not the whole A4)
+            () {
+              final w = 99 * PdfPageFormat.mm;
+              final h = 215 * PdfPageFormat.mm;
+              final diagonal = math.sqrt(w * w + h * h);
+              final stripeWidth = 2 * PdfPageFormat.mm;
+              return pw.Positioned(
+                left: (w - diagonal) / 2,
+                top: (h - stripeWidth) / 2,
+                child: pw.Transform.rotate(
+                  angle: -math.atan(h / w),
+                  child: pw.Container(
+                    width: diagonal,
+                    height: stripeWidth,
+                    color: stripeColor!,
+                  ),
+                ),
+              );
+            }(),
+          body,
+        ],
+      ),
+    );
+
+    doc.addPage(
+      pw.Page(
+        pageFormat: PdfPageFormat.a4,
+        build: (_) => centered
+            ? pw.Center(child: card)
+            : pw.Align(alignment: pw.Alignment.topLeft, child: card),
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (_) async => doc.save(),
+      name: _buildFilename(patient, presc).replaceFirst('.pdf', '_A4.pdf'),
+      format: PdfPageFormat.a4,
+      usePrinterSettings: false,
+    );
+  }
+
+  // ====== Internal ======
   static Future<pw.Font> _loadMongolianFont() async {
+    // Try Times New Roman first (as in example), fallback to NotoSans, then Helvetica
     try {
-      final fontData = await rootBundle.load(
-        'assets/fonts/NotoSans-Regular.ttf',
-      );
-      return pw.Font.ttf(fontData);
+      final tnr = await rootBundle.load('assets/fonts/TimesNewRoman.ttf');
+      return pw.Font.ttf(tnr);
     } catch (_) {
-      return pw.Font.helvetica();
+      try {
+        final noto = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
+        return pw.Font.ttf(noto);
+      } catch (_) {
+        return pw.Font.helvetica();
+      }
     }
   }
+
+  static String _buildFilename(Patient patient, Prescription presc) =>
+      'Жор_${patient.familyName}_${presc.createdAt.year}${presc.createdAt.month}${presc.createdAt.day}.pdf';
 
   static String _titleByType(PrescriptionType t) {
     switch (t) {
@@ -62,8 +177,40 @@ class PdfService {
     }
   }
 
-  static String _buildFilename(Patient patient, Prescription presc) =>
-      'Жор_${patient.familyName}_${presc.createdAt.year}${presc.createdAt.month}${presc.createdAt.day}.pdf';
+  static pw.PageTheme _pageTheme({PdfColor? stripeColor}) {
+    return pw.PageTheme(
+      pageFormat: prescriptionFormat,
+      buildBackground: (context) => pw.FullPage(
+        ignoreMargins: true,
+        child: pw.Stack(
+          children: [
+            pw.Container(color: PdfColors.white),
+            if (stripeColor != null) _diagonalStripe(stripeColor: stripeColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static pw.Widget _diagonalStripe({required PdfColor stripeColor}) {
+    final w = prescriptionFormat.width;
+    final h = prescriptionFormat.height;
+    final diagonal = math.sqrt(w * w + h * h);
+    final stripeWidth = 1 * PdfPageFormat.mm;
+
+    return pw.Positioned(
+      left: (w - diagonal) / 2,
+      top: (h - stripeWidth) / 2,
+      child: pw.Transform.rotate(
+        angle: -math.atan(h / w),
+        child: pw.Container(
+          width: diagonal,
+          height: stripeWidth,
+          color: stripeColor,
+        ),
+      ),
+    );
+  }
 
   static Future<Uint8List> _buildPrescriptionPdfBytes(
     Patient patient,
@@ -74,57 +221,80 @@ class PdfService {
 
     final styleTitle = pw.TextStyle(
       font: ttf,
-      fontSize: 18,
+      fontSize: 12,
       fontWeight: pw.FontWeight.bold,
     );
-    final styleHeader = pw.TextStyle(font: ttf, fontSize: 11);
-    final style = pw.TextStyle(font: ttf, fontSize: 11);
+    final styleSmall = pw.TextStyle(font: ttf, fontSize: 6.5);
+    final style = pw.TextStyle(font: ttf, fontSize: 8);
     final styleBold = pw.TextStyle(
       font: ttf,
-      fontSize: 11,
+      fontSize: 8,
       fontWeight: pw.FontWeight.bold,
     );
 
+    // Determine stripe color based on prescription type
+    PdfColor? stripeColor;
+    if (presc.type == PrescriptionType.psychotropic) {
+      stripeColor = PdfColors.green;
+    } else if (presc.type == PrescriptionType.narcotic) {
+      stripeColor = PdfColors.yellow;
+    }
+
     doc.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(40),
-        build: (ctx) => pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            _buildTopHeader(styleHeader),
-            pw.SizedBox(height: 20),
-            _buildMainContainer(patient, presc, styleTitle, style, styleBold),
-            pw.SizedBox(height: 8),
-            _buildBottomTable(presc, style, styleBold),
-          ],
+        pageTheme: _pageTheme(stripeColor: stripeColor),
+        build: (ctx) => pw.Padding(
+          padding: const pw.EdgeInsets.all(6),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              _buildTopHeader(styleSmall),
+              pw.SizedBox(height: 3),
+              _buildPrescriptionBox(
+                patient,
+                presc,
+                styleTitle,
+                style,
+                styleBold,
+              ),
+              pw.SizedBox(height: 3),
+              _buildBottomTable(presc, style, styleBold),
+            ],
+          ),
         ),
       ),
     );
 
-    final data = await doc.save();
-    return Uint8List.fromList(data);
+    return Uint8List.fromList(await doc.save());
   }
 
-  static pw.Widget _buildTopHeader(pw.TextStyle styleHeader) {
-    return pw.Center(
-      child: pw.Column(
-        children: [
-          pw.Text(
-            'Эрүүл мэндийн сайдын 2019 оны 12 дугаар сарын 30-ны өдрийн',
-            style: styleHeader,
-          ),
-          pw.Text(
-            'А/611 дугаар тушаалын өрвлнөлгүүлээр хавсралт',
-            style: styleHeader,
-          ),
-          pw.Text('Эрүүл мэндийн бүртгэлийн маягт АМ-9А', style: styleHeader),
-        ],
-      ),
+  // ====== Widgets ======
+
+  // Helper method for safe string handling
+  static String _safeStr(String? text, {String fallback = ''}) {
+    return text?.trim().isEmpty ?? true ? fallback : text!;
+  }
+
+  // Helper method for date formatting
+  static String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final year = date.year.toString();
+    return '$day / $month / $year';
+  }
+
+  static pw.Widget _buildTopHeader(pw.TextStyle style) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      children: [
+        pw.Text(_headerText1, style: style, textAlign: pw.TextAlign.center),
+        pw.Text(_headerText2, style: style, textAlign: pw.TextAlign.center),
+        pw.Text(_headerText3, style: style, textAlign: pw.TextAlign.center),
+      ],
     );
   }
 
-  static pw.Widget _buildMainContainer(
+  static pw.Widget _buildPrescriptionBox(
     Patient patient,
     Prescription presc,
     pw.TextStyle styleTitle,
@@ -135,182 +305,215 @@ class PdfService {
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: PdfColors.black, width: 1.5),
       ),
-      child: pw.Padding(
-        padding: const pw.EdgeInsets.all(16),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: [
-            pw.Center(
-              child: pw.Text(_titleByType(presc.type), style: styleTitle),
-            ),
-            pw.SizedBox(height: 8),
-            pw.Center(
-              child: pw.Text(
-                '${presc.createdAt.year} оны ${presc.createdAt.month} сарын ${presc.createdAt.day}',
-                style: style,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        mainAxisSize: pw.MainAxisSize.min,
+        children: [
+          // Title
+          pw.Center(
+            child: pw.Text(_titleByType(presc.type), style: styleTitle),
+          ),
+          pw.SizedBox(height: 2),
+
+          // Date line with actual date
+          pw.Center(child: pw.Text(_formatDate(presc.createdAt), style: style)),
+          pw.SizedBox(height: 3),
+
+          // Patient name with underline
+          pw.Row(
+            children: [
+              pw.Text('Өвчтөний овог, нэр: ', style: style),
+              pw.Expanded(
+                child: pw.Container(
+                  decoration: const pw.BoxDecoration(
+                    border: pw.Border(bottom: pw.BorderSide(width: 0.5)),
+                  ),
+                  child: pw.Text(_safeStr(patient.fullName), style: style),
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 3),
+
+          // Age, Sex, Diagnosis line with underlines
+          pw.Row(
+            children: [
+              pw.Text('Нас: ', style: style),
+              pw.Container(
+                width: 20,
+                decoration: const pw.BoxDecoration(
+                  border: pw.Border(bottom: pw.BorderSide(width: 0.5)),
+                ),
+                child: pw.Text('${patient.age}', style: style),
+              ),
+              pw.SizedBox(width: 2),
+              pw.Text('Хүйс: ', style: style),
+              pw.Container(
+                width: 18,
+                decoration: const pw.BoxDecoration(
+                  border: pw.Border(bottom: pw.BorderSide(width: 0.5)),
+                ),
+                child: pw.Text(
+                  patient.sex.name == 'male' ? 'Эр' : 'Эм',
+                  style: style,
+                ),
+              ),
+              pw.SizedBox(width: 2),
+              pw.Text('Онош: ', style: style),
+              pw.Expanded(
+                child: pw.Container(
+                  decoration: const pw.BoxDecoration(
+                    border: pw.Border(bottom: pw.BorderSide(width: 0.5)),
+                  ),
+                  child: pw.Text(_safeStr(presc.diagnosis), style: style),
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 2),
+
+          pw.Row(
+            children: [
+              pw.Text('Регистрийн №: ', style: style),
+              pw.Expanded(
+                child: pw.Container(
+                  decoration: const pw.BoxDecoration(
+                    border: pw.Border(bottom: pw.BorderSide(width: 0.5)),
+                  ),
+                  child: pw.Text(
+                    _safeStr(patient.registrationNumber),
+                    style: style,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 4),
+
+          ..._buildDrugSection(presc, style, styleBold),
+
+          pw.SizedBox(height: 3),
+
+          // Doctor and clinic information
+          pw.Container(
+            height: 0.5,
+            color: PdfColors.grey800,
+            margin: const pw.EdgeInsets.symmetric(vertical: 2),
+          ),
+          pw.Text(
+            'Жор бичсэн эмчийн нэр, утас: ${_safeStr(presc.doctorName)} ${_safeStr(presc.doctorPhone)}',
+            style: style,
+          ),
+          pw.SizedBox(height: 1.5),
+          pw.Text('Тэмдэг: _________________', style: style),
+          pw.SizedBox(height: 1.5),
+          pw.Text('Эмнэлгийн нэр: ${_safeStr(presc.clinicName)}', style: style),
+          pw.SizedBox(height: 2),
+          // Tear-off line
+          pw.Row(
+            children: List.generate(
+              80,
+              (i) => pw.Container(
+                width: 2,
+                height: 1,
+                margin: const pw.EdgeInsets.symmetric(horizontal: 0.5),
+                color: PdfColors.grey600,
               ),
             ),
-            pw.SizedBox(height: 16),
-            _buildPatientInfo(patient, presc, style, styleBold),
-            pw.SizedBox(height: 12),
-            ..._buildDrugsSection(presc, style, styleBold),
-            if (presc.drugs.length < 3)
-              ..._buildEmptyDrugSlots(presc, style, styleBold),
-            if (presc.notes != null && presc.notes!.isNotEmpty) ...[
-              pw.SizedBox(height: 12),
-              _buildNotes(presc.notes!, style, styleBold),
-            ],
-            pw.SizedBox(height: 12),
-            _buildDoctorClinicSection(presc, style, styleBold),
-            pw.SizedBox(height: 8),
-            pw.Divider(color: PdfColors.black),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  static pw.Widget _buildPatientInfo(
-    Patient patient,
-    Prescription presc,
-    pw.TextStyle style,
-    pw.TextStyle styleBold,
-  ) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text('Өвчтөний овог, нэр: ${patient.fullName}', style: style),
-        pw.SizedBox(height: 8),
-        pw.Text(
-          'Нас: ${patient.age}  Хүйс: ${patient.sex.name == 'male' ? 'Эр' : 'Эм'}  Онош: ${presc.diagnosis}',
-          style: style,
-        ),
-        pw.SizedBox(height: 4),
-        pw.Text('ICD-10: ${presc.icd}', style: style),
-        pw.SizedBox(height: 8),
-        pw.Text('Регистрийн №: ${patient.registrationNumber}', style: style),
-        pw.SizedBox(height: 8),
-        pw.Text(
-          'Утас: ${patient.phone}  Хаяг: ${patient.address}',
-          style: style,
-        ),
-      ],
-    );
-  }
-
-  static List<pw.Widget> _buildDrugsSection(
-    Prescription presc,
-    pw.TextStyle style,
-    pw.TextStyle styleBold,
-  ) {
-    final maxRows = presc.drugs.length > 3 ? 3 : presc.drugs.length;
-    return List.generate(maxRows, (index) {
-      final drug = presc.drugs[index];
-      return pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text('Rp:', style: styleBold),
-          pw.SizedBox(height: 4),
-          pw.Text('${drug.mongolianName}', style: style),
-          pw.Text(
-            'Тун: ${drug.dose}, Хэлбэр: ${drug.form}, Тоо: ${drug.quantity}' +
-                (drug.treatmentDays != null
-                    ? ', Хоног: ${drug.treatmentDays}'
-                    : ''),
-            style: style,
-          ),
-          pw.SizedBox(height: 8),
-          pw.Row(
-            children: [
-              pw.Text('S:', style: styleBold),
-              pw.SizedBox(width: 8),
-              pw.Expanded(child: pw.Text(drug.instructions, style: style)),
-            ],
-          ),
-          pw.SizedBox(height: 16),
-        ],
-      );
-    });
-  }
-
-  static List<pw.Widget> _buildEmptyDrugSlots(
+  static List<pw.Widget> _buildDrugSection(
     Prescription presc,
     pw.TextStyle style,
     pw.TextStyle styleBold,
   ) {
     final widgets = <pw.Widget>[];
-    for (int i = presc.drugs.length; i < 3; i++) {
-      widgets.addAll([
-        pw.Row(
-          children: [
-            pw.Text('Rp:', style: styleBold),
-            pw.SizedBox(width: 100),
-            pw.Text('#', style: style),
-          ],
-        ),
-        pw.SizedBox(height: 40),
-        pw.Text('S:', style: styleBold),
-        pw.SizedBox(height: 40),
-      ]);
-    }
-    return widgets;
-  }
+    final drugs = presc.drugs.take(3).toList();
 
-  static pw.Widget _buildNotes(
-    String notes,
-    pw.TextStyle style,
-    pw.TextStyle styleBold,
-  ) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.all(8),
-      decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.grey400),
-        borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
-      ),
-      child: pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text('Нэмэлт тайлбар:', style: styleBold),
+    for (int i = 0; i < 3; i++) {
+      if (i < drugs.length) {
+        final drug = drugs[i];
+        // Build drug info string
+        String drugInfo = _safeStr(drug.mongolianName);
+        if (drug.dose.isNotEmpty) {
+          drugInfo += ' ${drug.dose}';
+        }
+        if (drug.form.isNotEmpty) {
+          drugInfo += ' (${drug.form})';
+        }
+
+        widgets.addAll([
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Rp: ', style: styleBold),
+              pw.Expanded(child: pw.Text(drugInfo, style: style)),
+            ],
+          ),
+          pw.Row(
+            children: [
+              pw.SizedBox(width: 20),
+              pw.Expanded(
+                child: pw.Text(
+                  'D.t.d. № ${drug.quantity}${drug.treatmentDays != null ? " (${drug.treatmentDays} хоног)" : ""}',
+                  style: style,
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 2),
+          pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('S: ', style: styleBold),
+              pw.Expanded(
+                child: pw.Text(_safeStr(drug.instructions), style: style),
+              ),
+            ],
+          ),
           pw.SizedBox(height: 4),
-          pw.Text(notes, style: style),
-        ],
-      ),
-    );
-  }
+        ]);
+      } else {
+        // Empty slot for unused prescription lines
+        widgets.addAll([
+          pw.Row(
+            children: [
+              pw.Text('Rp: ', style: styleBold),
+              pw.Expanded(
+                child: pw.Container(
+                  height: 6,
+                  decoration: const pw.BoxDecoration(
+                    border: pw.Border(bottom: pw.BorderSide(width: 0.3)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 8),
+          pw.Row(
+            children: [
+              pw.Text('S: ', style: styleBold),
+              pw.Expanded(
+                child: pw.Container(
+                  height: 6,
+                  decoration: const pw.BoxDecoration(
+                    border: pw.Border(bottom: pw.BorderSide(width: 0.3)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          pw.SizedBox(height: 4),
+        ]);
+      }
+    }
 
-  static pw.Widget _buildDoctorClinicSection(
-    Prescription presc,
-    pw.TextStyle style,
-    pw.TextStyle styleBold,
-  ) {
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        if (presc.doctorName != null)
-          pw.Text(
-            'Жор бичсэн эмч: ${presc.doctorName}${presc.doctorPhone != null ? '  Утас: ${presc.doctorPhone}' : ''}',
-            style: style,
-          ),
-        if (presc.clinicName != null)
-          pw.Text('Эмнэлгийн нэр: ${presc.clinicName}', style: style),
-        if (presc.ePrescriptionCode != null)
-          pw.Text('E-жор код: ${presc.ePrescriptionCode}', style: style),
-        if (presc.clinicStamp == true)
-          pw.Text('Байгууллагын тэмдэг: ТИЙМ', style: style),
-        if (presc.generalDoctorSignature == true)
-          pw.Text('Ерөнхий эмчийн гарын үсэг: ТИЙМ', style: style),
-        if (presc.specialIndex != null || presc.serialNumber != null)
-          pw.Text(
-            'Индекс/Серийн дугаар: ${presc.specialIndex ?? ''} / ${presc.serialNumber ?? ''}',
-            style: style,
-          ),
-        if (presc.receiverName != null)
-          pw.Text(
-            'Хүлээн авагч: ${presc.receiverName}  РД: ${presc.receiverReg ?? ''}  Утас: ${presc.receiverPhone ?? ''}',
-            style: style,
-          ),
-      ],
-    );
+    return widgets;
   }
 
   static pw.Widget _buildBottomTable(
@@ -319,109 +522,86 @@ class PdfService {
     pw.TextStyle styleBold,
   ) {
     return pw.Table(
-      border: pw.TableBorder.all(color: PdfColors.black),
-      columnWidths: {
-        0: const pw.FixedColumnWidth(30),
-        1: const pw.FlexColumnWidth(2),
-        2: const pw.FlexColumnWidth(2),
-        3: const pw.FlexColumnWidth(1.5),
+      border: pw.TableBorder.all(color: PdfColors.black, width: 0.8),
+      defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
+      columnWidths: const {
+        0: pw.FixedColumnWidth(15),
+        1: pw.FlexColumnWidth(2.5),
+        2: pw.FlexColumnWidth(2),
+        3: pw.FlexColumnWidth(1.2),
       },
       children: [
+        // Header row
         pw.TableRow(
           children: [
-            pw.Padding(
-              padding: const pw.EdgeInsets.all(4),
-              child: pw.Center(child: pw.Text('№', style: styleBold)),
+            _tableCell('№', styleBold, center: true, minHeight: 10),
+            _tableCell(
+              'Эмийн нэр, тун, хэмжээ, хэлбэр',
+              styleBold,
+              center: true,
+              minHeight: 10,
             ),
-            pw.Padding(
-              padding: const pw.EdgeInsets.all(4),
-              child: pw.Center(
-                child: pw.Text(
-                  'Эмийн нэр, тун,\nхэмжээ, хэлбэр',
-                  style: styleBold,
-                  textAlign: pw.TextAlign.center,
-                ),
-              ),
+            _tableCell(
+              'Хэрэглэх арга, хугацаа',
+              styleBold,
+              center: true,
+              minHeight: 10,
             ),
-            pw.Padding(
-              padding: const pw.EdgeInsets.all(4),
-              child: pw.Center(
-                child: pw.Text(
-                  'Хэрэглэх арга,\nхугацаа',
-                  style: styleBold,
-                  textAlign: pw.TextAlign.center,
-                ),
-              ),
-            ),
-            pw.Padding(
-              padding: const pw.EdgeInsets.all(4),
-              child: pw.Center(
-                child: pw.Text(
-                  'Олгосон\n/гарын үсэг/',
-                  style: styleBold,
-                  textAlign: pw.TextAlign.center,
-                ),
-              ),
+            _tableCell(
+              'Олгосон\n/гарын үсэг/',
+              styleBold,
+              center: true,
+              minHeight: 10,
             ),
           ],
         ),
+        // Data rows
         ...List.generate(3, (index) {
           if (index < presc.drugs.length) {
-            final drug = presc.drugs[index];
+            final d = presc.drugs[index];
             return pw.TableRow(
               children: [
-                pw.Padding(
-                  padding: const pw.EdgeInsets.all(4),
-                  child: pw.Center(
-                    child: pw.Text('${index + 1}', style: style),
-                  ),
+                _tableCell('${index + 1}', style, center: true, minHeight: 14),
+                _tableCell(
+                  '${_safeStr(d.mongolianName)}\n${_safeStr(d.dose)}, ${_safeStr(d.form)}, ${d.quantity}',
+                  style,
+                  minHeight: 14,
                 ),
-                pw.Padding(
-                  padding: const pw.EdgeInsets.all(4),
-                  child: pw.Text(
-                    '${drug.mongolianName}\n${drug.dose}, ${drug.form}, ${drug.quantity}' +
-                        (drug.treatmentDays != null
-                            ? ', ${drug.treatmentDays} хоног'
-                            : ''),
-                    style: style,
-                  ),
-                ),
-                pw.Padding(
-                  padding: const pw.EdgeInsets.all(4),
-                  child: pw.Text(drug.instructions, style: style),
-                ),
-                pw.Padding(
-                  padding: const pw.EdgeInsets.all(4),
-                  child: pw.Text('', style: style),
-                ),
+                _tableCell(_safeStr(d.instructions), style, minHeight: 14),
+                _tableCell('', style, minHeight: 14),
               ],
             );
           } else {
             return pw.TableRow(
               children: [
-                pw.Padding(
-                  padding: const pw.EdgeInsets.all(4),
-                  child: pw.Center(
-                    child: pw.Text('${index + 1}', style: style),
-                  ),
-                ),
-                pw.Padding(
-                  padding: const pw.EdgeInsets.all(16),
-                  child: pw.Text('', style: style),
-                ),
-                pw.Padding(
-                  padding: const pw.EdgeInsets.all(16),
-                  child: pw.Text('', style: style),
-                ),
-                pw.Padding(
-                  padding: const pw.EdgeInsets.all(16),
-                  child: pw.Text('', style: style),
-                ),
+                _tableCell('${index + 1}', style, center: true, minHeight: 14),
+                _tableCell('', style, minHeight: 14),
+                _tableCell('', style, minHeight: 14),
+                _tableCell('', style, minHeight: 14),
               ],
             );
           }
         }),
       ],
+    );
+  }
+
+  static pw.Widget _tableCell(
+    String text,
+    pw.TextStyle style, {
+    bool center = false,
+    double minHeight = 0,
+  }) {
+    return pw.Container(
+      constraints: minHeight > 0
+          ? pw.BoxConstraints(minHeight: minHeight)
+          : null,
+      padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 1.5),
+      child: pw.Text(
+        text,
+        style: style,
+        textAlign: center ? pw.TextAlign.center : pw.TextAlign.left,
+      ),
     );
   }
 }

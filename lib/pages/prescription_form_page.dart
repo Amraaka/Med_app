@@ -113,7 +113,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
 
   String? _validateBusinessRules() {
     if (_drugs.isEmpty) return 'Дор хаяж нэг эм нэмнэ үү';
-    // Max drugs per type
     const regularMaxDrugs = 3;
     const psychotropicMaxDrugs = 2;
     const narcoticMaxDrugs = 1;
@@ -128,7 +127,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
         _drugs.length > narcoticMaxDrugs) {
       return 'Мансуурах эмийн мөр $narcoticMaxDrugs-аас ихгүй';
     }
-    // Days limits per drug for special types
     final limit = _allowedDays();
     if (limit != null) {
       for (final d in _drugs) {
@@ -138,21 +136,18 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
         }
       }
     }
-    // Guardian required if patient age < 16
     if (widget.patient.age < 16) {
       if (_guardianNameCtrl.text.trim().isEmpty ||
           _guardianPhoneCtrl.text.trim().isEmpty) {
         return 'Асран хамгаалагчийн нэр, утас заавал';
       }
     }
-    // Doctor/clinic required
     if (_doctorNameCtrl.text.trim().isEmpty) {
       return 'Жор бичсэн эмчийн нэр заавал';
     }
     if (_clinicNameCtrl.text.trim().isEmpty) {
       return 'Эмнэлгийн нэр заавал';
     }
-    // Special fields required
     if (_type == PrescriptionType.psychotropic ||
         _type == PrescriptionType.narcotic) {
       if (_specialIndexCtrl.text.trim().isEmpty ||
@@ -177,7 +172,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
       return;
     }
 
-    // Update patient information if any fields were filled
     final updatedPatient = widget.patient.copyWith(
       registrationNumber: _regNoCtrl.text.trim().isNotEmpty
           ? _regNoCtrl.text.trim()
@@ -196,15 +190,12 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
           : widget.patient.icd,
     );
 
-    // Save updated patient info
     await context.read<PatientService>().savePatient(updatedPatient);
 
-    // Compute overall treatment days from per-drug values
     final overallDays = _drugs
         .map((d) => d.treatmentDays ?? 0)
         .fold<int>(0, (prev, e) => e > prev ? e : prev);
 
-    // Generate ePrescriptionCode if blank
     final eCode = _ePrescriptionCodeCtrl.text.trim().isEmpty
         ? 'EP-${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}'
         : _ePrescriptionCodeCtrl.text.trim();
@@ -256,7 +247,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
 
     await context.read<PrescriptionService>().savePrescription(presc);
 
-    // Generate and preview PDF using updated patient info
     await PdfService.showPrescriptionPdf(context, updatedPatient, presc);
 
     if (!mounted) return;
@@ -275,7 +265,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Patient summary
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(12),
@@ -319,7 +308,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
               ),
               const SizedBox(height: 16),
 
-              // Patient info fields (if not yet filled)
               if (p.registrationNumber.isEmpty ||
                   p.phone.isEmpty ||
                   p.address.isEmpty) ...[
@@ -406,7 +394,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
                 const SizedBox(height: 16),
               ],
 
-              // Prescription type
               InputDecorator(
                 decoration: const InputDecoration(
                   labelText: 'Жорын төрөл',
@@ -438,7 +425,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
               ),
               const SizedBox(height: 16),
 
-              // Diagnosis and ICD for this prescription
               Row(
                 children: [
                   Expanded(
@@ -481,7 +467,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
               ),
               const SizedBox(height: 16),
 
-              // Drugs dynamic list
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -536,7 +521,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
 
               const SizedBox(height: 16),
 
-              // Narcotic-specific option
               if (_type == PrescriptionType.narcotic)
                 SwitchListTile(
                   title: const Text('Паллиатив тусламж (хоног ≤ 10)'),
@@ -544,7 +528,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
                   onChanged: (v) => setState(() => _isPalliative = v),
                 ),
 
-              // Doctor and clinic info
               Card(
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -638,7 +621,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
 
               const SizedBox(height: 16),
 
-              // Special fields for psychotropic/narcotic
               if (_type == PrescriptionType.psychotropic ||
                   _type == PrescriptionType.narcotic) ...[
                 Card(

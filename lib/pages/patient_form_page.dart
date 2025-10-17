@@ -43,7 +43,6 @@ class _PatientFormPageState extends State<PatientFormPage> {
       ).showSnackBar(const SnackBar(content: Text('Төрсөн огноо сонгоно уу')));
       return;
     }
-    // Generate a simple unique id when creating a new patient
     final id =
         widget.existing?.id ?? DateTime.now().microsecondsSinceEpoch.toString();
     final patient = Patient(
@@ -53,7 +52,6 @@ class _PatientFormPageState extends State<PatientFormPage> {
       birthDate: _birthDate!,
       sex: _sex,
     );
-    // Just return the patient - the service will save it
     if (!mounted) return;
     Navigator.of(context).pop(patient);
   }

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models.dart';
 
-// ============================================================================
 // App Bottom Navigation Widget
-// ============================================================================
-
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
@@ -23,7 +20,7 @@ class AppBottomNav extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.fromLTRB(60, 0, 60, 40),
-      height: 68,
+      height: 80,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(34),
@@ -79,7 +76,7 @@ class AppBottomNav extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? accentColor : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
@@ -95,8 +92,7 @@ class AppBottomNav extends StatelessWidget {
             const SizedBox(height: 4),
             AnimatedOpacity(
               duration: const Duration(milliseconds: 200),
-              opacity:
-                  1.0, // set to (isSelected ? 1.0 : 0.0) to show only when selected
+              opacity: 1.0,
               child: Text(
                 label,
                 style: TextStyle(
@@ -113,10 +109,7 @@ class AppBottomNav extends StatelessWidget {
   }
 }
 
-// ============================================================================
 // Drug Input Widget
-// ============================================================================
-
 class DrugInput extends StatefulWidget {
   const DrugInput({
     super.key,

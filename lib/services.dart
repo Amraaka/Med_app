@@ -1,18 +1,16 @@
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'models.dart';
+import 'package:path_provider/path_provider.dart';
 
-// ============================================================================
 // Patient Service
-// ============================================================================
 
-/// Simple service to manage patients - combines data storage and state management
 class PatientService extends ChangeNotifier {
   List<Patient> _patients = [];
 
   List<Patient> get patients => _patients;
 
-  /// Load all patients from storage
   Future<void> loadPatients() async {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getStringList('patients_list') ?? [];
@@ -169,9 +167,50 @@ class PrescriptionService extends ChangeNotifier {
   }
 }
 
-// ============================================================================
+// Doctor Profile Service
+
+class DoctorProfileService extends ChangeNotifier {
+  static const _prefsKey = 'doctor_profile';
+  DoctorProfile _profile = const DoctorProfile(
+    name: 'Др. Ариун',
+    title: 'Дотрын эмч',
+    location: 'Улаанбаатар, Монгол',
+  );
+
+  DoctorProfile get profile => _profile;
+
+  Future<void> loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+    if (raw != null) {
+      _profile = DoctorProfile.fromJson(raw);
+    }
+    notifyListeners();
+  }
+
+  Future<void> updateProfile(DoctorProfile updated) async {
+    _profile = updated;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, _profile.toJson());
+    notifyListeners();
+  }
+
+  Future<String?> savePickedImage(File sourceFile) async {
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final filename =
+          'doctor_${DateTime.now().millisecondsSinceEpoch}${sourceFile.path.split('.').last.isNotEmpty ? '.${sourceFile.path.split('.').last}' : ''}';
+      final dest = File('${dir.path}/$filename');
+      final bytes = await sourceFile.readAsBytes();
+      await dest.writeAsBytes(bytes, flush: true);
+      return dest.path;
+    } catch (_) {
+      return null;
+    }
+  }
+}
+
 // Demo Seed Builders
-// ============================================================================
 
 List<Patient> _buildDemoPatients() {
   return [
@@ -186,18 +225,6 @@ List<Patient> _buildDemoPatients() {
       address: 'УБ, БЗД, 15-р хороо',
       diagnosis: 'Дээд амьсгалын замын цочмог халдвар',
       icd: 'J06.9',
-    ),
-    Patient(
-      id: 'p_demo_psycho',
-      familyName: 'Сүрэн',
-      givenName: 'Мөнх-Эрдэнэ',
-      birthDate: DateTime(1987, 11, 2),
-      sex: Sex.male,
-      registrationNumber: 'УБ87110233',
-      phone: '99114455',
-      address: 'УБ, СБД, 1-р хороо',
-      diagnosis: 'Нойрны эмгэг',
-      icd: 'G47.9',
     ),
     Patient(
       id: 'p_demo_narcotic',

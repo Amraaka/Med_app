@@ -1,9 +1,6 @@
 import 'dart:convert';
 
-// ============================================================================
 // Drug Model
-// ============================================================================
-
 class Drug {
   final String mongolianName;
   final String dose;
@@ -57,15 +54,12 @@ class Drug {
     'treatmentDays': treatmentDays,
   };
 
-  // Support map-based serialization used by Prescription
   factory Drug.fromMap(Map<String, dynamic> map) => Drug.fromJson(map);
 
   Map<String, dynamic> toMap() => toJson();
 }
 
-// ============================================================================
 // Patient Model
-// ============================================================================
 
 enum Sex { male, female }
 
@@ -75,7 +69,7 @@ class Patient {
   final String givenName; // Нэр
   final DateTime birthDate; // Төрсөн огноо
   final Sex sex; // Хүйс
-  // Optional fields - collected when creating prescription
+
   final String registrationNumber; // Регистрийн дугаар
   final String phone; // Утас
   final String address; // Хаяг
@@ -143,7 +137,6 @@ class Patient {
   };
 
   factory Patient.fromMap(Map<String, dynamic> map) {
-    // Backward compatibility with older saves
     final legacyName = map['name'] as String?;
     final legacyCondition =
         map['condition'] as String? ?? map['situation'] as String?;
@@ -174,9 +167,7 @@ class Patient {
       Patient.fromMap(json.decode(source));
 }
 
-// ============================================================================
 // Prescription Model
-// ============================================================================
 
 enum PrescriptionType { regular, psychotropic, narcotic }
 
@@ -191,18 +182,16 @@ class Prescription {
   final String? guardianName; // if patient < 16
   final String? guardianPhone;
   final String? attachmentPath; // optional custom image path
-  // New structured fields
-  final int? treatmentDays; // total treatment duration in days
+  final int? treatmentDays;
   final String? doctorName;
   final String? doctorPhone;
   final String? clinicName;
   final bool? clinicStamp; // Whether clinic stamp applied
-  final bool?
-  generalDoctorSignature; // Whether additional general doctor signature applied
-  final String? ePrescriptionCode; // unique code
-  final String? specialIndex; // for psychotropic/narcotic
-  final String? serialNumber; // prescription serial number
-  // Receiver (dispense) info for psychotropic/narcotic
+  final bool? generalDoctorSignature;
+  final String? ePrescriptionCode;
+  final String? specialIndex;
+  final String? serialNumber;
+
   final String? receiverName;
   final String? receiverReg;
   final String? receiverPhone;
@@ -304,4 +293,49 @@ class Prescription {
   String toJson() => json.encode(toMap());
   factory Prescription.fromJson(String source) =>
       Prescription.fromMap(json.decode(source));
+}
+
+// Doctor Profile Model
+class DoctorProfile {
+  final String name;
+  final String title;
+  final String location;
+  final String? photoPath;
+
+  const DoctorProfile({
+    required this.name,
+    required this.title,
+    required this.location,
+    this.photoPath,
+  });
+
+  DoctorProfile copyWith({
+    String? name,
+    String? title,
+    String? location,
+    String? photoPath,
+  }) => DoctorProfile(
+    name: name ?? this.name,
+    title: title ?? this.title,
+    location: location ?? this.location,
+    photoPath: photoPath ?? this.photoPath,
+  );
+
+  Map<String, dynamic> toMap() => {
+    'name': name,
+    'title': title,
+    'location': location,
+    'photoPath': photoPath,
+  };
+
+  factory DoctorProfile.fromMap(Map<String, dynamic> map) => DoctorProfile(
+    name: (map['name'] as String?) ?? '',
+    title: (map['title'] as String?) ?? '',
+    location: (map['location'] as String?) ?? '',
+    photoPath: map['photoPath'] as String?,
+  );
+
+  String toJson() => json.encode(toMap());
+  factory DoctorProfile.fromJson(String source) =>
+      DoctorProfile.fromMap(json.decode(source));
 }

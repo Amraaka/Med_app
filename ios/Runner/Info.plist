@@ -45,5 +45,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Эмчийн профайл зураг сонгох зорилгоор зурагны сан руу нэвтрэх шаардлагатай.</string>
 </dict>
 </plist>
