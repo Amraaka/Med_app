@@ -306,6 +306,38 @@ class PatientDetailPage extends StatelessWidget {
                               ),
                             ),
                           ),
+                          Expanded(
+                            child: TextButton.icon(
+                              onPressed: () async {
+                                final pngBytes =
+                                    await PdfService.generatePrescriptionPng(
+                                      patient,
+                                      presc,
+                                      dpi: 300,
+                                    );
+                                if (!context.mounted) return;
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => Dialog(
+                                    insetPadding: const EdgeInsets.all(12),
+                                    child: InteractiveViewer(
+                                      minScale: 0.5,
+                                      maxScale: 4,
+                                      child: Image.memory(
+                                        pngBytes,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.image, size: 16),
+                              label: const Text(
+                                'PNG харах',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ),
                           TextButton.icon(
                             onPressed: () async {
                               final confirm = await showDialog<bool>(
@@ -342,14 +374,10 @@ class PatientDetailPage extends StatelessWidget {
                                 );
                               }
                             },
-                            icon: const Icon(
-                              Icons.delete,
-                              size: 16,
-                              color: Colors.red,
-                            ),
+                            icon: const Icon(Icons.delete, size: 16),
                             label: const Text(
                               'Устгах',
-                              style: TextStyle(fontSize: 12, color: Colors.red),
+                              style: TextStyle(fontSize: 12),
                             ),
                           ),
                         ],

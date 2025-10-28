@@ -13,7 +13,6 @@ class PdfService {
     marginAll: 0,
   );
 
-  // ====== Constants ======
   static const String _headerText1 =
       'Эрүүл мэндийн сайдын 2019 оны 12 дугаар сарын 30-ны өдрийн';
   static const String _headerText2 =
@@ -32,7 +31,7 @@ class PdfService {
         onLayout: (_) async => bytes,
         name: filename,
         format: prescriptionFormat,
-        usePrinterSettings: false, // Show at actual prescription size
+        usePrinterSettings: false,
       );
     } catch (e) {
       await Printing.sharePdf(bytes: bytes, filename: filename);
@@ -50,9 +49,20 @@ class PdfService {
     );
   }
 
-  /// Optional: Preview on an A4 sheet with the prescription centered.
-  /// This doesn't change the prescription size; it only wraps it on A4 for printers
-  /// that don't support custom paper sizes.
+  static Future<Uint8List> generatePrescriptionPng(
+    Patient patient,
+    Prescription presc, {
+    double dpi = 300,
+  }) async {
+    final pdfBytes = await _buildPrescriptionPdfBytes(patient, presc);
+    final rasterPage = await Printing.raster(
+      pdfBytes,
+      pages: const [0],
+      dpi: dpi,
+    ).first;
+    return await rasterPage.toPng();
+  }
+
   static Future<void> showPrescriptionOnA4(
     context,
     Patient patient,
@@ -75,7 +85,6 @@ class PdfService {
       fontWeight: pw.FontWeight.bold,
     );
 
-    // Determine stripe color based on prescription type (optional on A4)
     PdfColor? stripeColor;
     if (presc.type == PrescriptionType.psychotropic) {
       stripeColor = PdfColors.green;
@@ -83,7 +92,6 @@ class PdfService {
       stripeColor = PdfColors.yellow;
     }
 
-    // Build the same content we use for the fixed-size page
     final body = pw.Padding(
       padding: const pw.EdgeInsets.all(6),
       child: pw.Column(
@@ -98,7 +106,6 @@ class PdfService {
       ),
     );
 
-    // Create an A4 page and place the prescription in a fixed-size container
     final card = pw.Container(
       width: 99 * PdfPageFormat.mm,
       height: 215 * PdfPageFormat.mm,
@@ -106,7 +113,6 @@ class PdfService {
       child: pw.Stack(
         children: [
           if (stripeColor != null)
-            // draw stripe over the card area (not the whole A4)
             () {
               final w = 99 * PdfPageFormat.mm;
               final h = 215 * PdfPageFormat.mm;
@@ -133,9 +139,13 @@ class PdfService {
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
-        build: (_) => centered
-            ? pw.Center(child: card)
-            : pw.Align(alignment: pw.Alignment.topLeft, child: card),
+        build: (_) => pw.Container(
+          width: PdfPageFormat.a4.width,
+          height: PdfPageFormat.a4.height,
+          child: pw.Stack(
+            children: [pw.Positioned(top: 0, right: 0, child: card)],
+          ),
+        ),
       ),
     );
 
@@ -147,9 +157,7 @@ class PdfService {
     );
   }
 
-  // ====== Internal ======
   static Future<pw.Font> _loadMongolianFont() async {
-    // Try Times New Roman first (as in example), fallback to NotoSans, then Helvetica
     try {
       final tnr = await rootBundle.load('assets/fonts/TimesNewRoman.ttf');
       return pw.Font.ttf(tnr);
@@ -232,7 +240,6 @@ class PdfService {
       fontWeight: pw.FontWeight.bold,
     );
 
-    // Determine stripe color based on prescription type
     PdfColor? stripeColor;
     if (presc.type == PrescriptionType.psychotropic) {
       stripeColor = PdfColors.green;
@@ -268,14 +275,10 @@ class PdfService {
     return Uint8List.fromList(await doc.save());
   }
 
-  // ====== Widgets ======
-
-  // Helper method for safe string handling
   static String _safeStr(String? text, {String fallback = ''}) {
     return text?.trim().isEmpty ?? true ? fallback : text!;
   }
 
-  // Helper method for date formatting
   static String _formatDate(DateTime date) {
     final day = date.day.toString().padLeft(2, '0');
     final month = date.month.toString().padLeft(2, '0');
@@ -310,17 +313,14 @@ class PdfService {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         mainAxisSize: pw.MainAxisSize.min,
         children: [
-          // Title
           pw.Center(
             child: pw.Text(_titleByType(presc.type), style: styleTitle),
           ),
           pw.SizedBox(height: 2),
 
-          // Date line with actual date
           pw.Center(child: pw.Text(_formatDate(presc.createdAt), style: style)),
           pw.SizedBox(height: 3),
 
-          // Patient name with underline
           pw.Row(
             children: [
               pw.Text('Өвчтөний овог, нэр: ', style: style),
@@ -336,7 +336,6 @@ class PdfService {
           ),
           pw.SizedBox(height: 3),
 
-          // Age, Sex, Diagnosis line with underlines
           pw.Row(
             children: [
               pw.Text('Нас: ', style: style),
@@ -395,7 +394,6 @@ class PdfService {
 
           pw.SizedBox(height: 3),
 
-          // Doctor and clinic information
           pw.Container(
             height: 0.5,
             color: PdfColors.grey800,
@@ -521,8 +519,9 @@ class PdfService {
     pw.TextStyle style,
     pw.TextStyle styleBold,
   ) {
+    // Table with full grid (outer border and all cell borders)
     return pw.Table(
-      border: pw.TableBorder.all(color: PdfColors.black, width: 0.8),
+      border: pw.TableBorder.all(color: PdfColors.black, width: 1.2),
       defaultVerticalAlignment: pw.TableCellVerticalAlignment.middle,
       columnWidths: const {
         0: pw.FixedColumnWidth(15),
@@ -555,7 +554,7 @@ class PdfService {
             ),
           ],
         ),
-        // Data rows
+        // Data rows (always 3, empty if no drug)
         ...List.generate(3, (index) {
           if (index < presc.drugs.length) {
             final d = presc.drugs[index];

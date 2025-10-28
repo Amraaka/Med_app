@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-// Drug Model
 class Drug {
   final String mongolianName;
   final String dose;
@@ -58,8 +57,6 @@ class Drug {
 
   Map<String, dynamic> toMap() => toJson();
 }
-
-// Patient Model
 
 enum Sex { male, female }
 
@@ -166,8 +163,6 @@ class Patient {
   factory Patient.fromJson(String source) =>
       Patient.fromMap(json.decode(source));
 }
-
-// Prescription Model
 
 enum PrescriptionType { regular, psychotropic, narcotic }
 
@@ -295,7 +290,6 @@ class Prescription {
       Prescription.fromMap(json.decode(source));
 }
 
-// Doctor Profile Model
 class DoctorProfile {
   final String name;
   final String title;
