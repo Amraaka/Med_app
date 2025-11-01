@@ -401,7 +401,7 @@ class _HomePageState extends State<HomePage> {
                       );
                     },
                     icon: const Icon(Icons.image, size: 16),
-                    label: const Text('PNG', style: TextStyle(fontSize: 12)),
+                    label: const Text('Хэвлэх', style: TextStyle(fontSize: 12)),
                   ),
                   TextButton.icon(
                     onPressed: () async {

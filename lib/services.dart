@@ -4,8 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'models.dart';
 import 'package:path_provider/path_provider.dart';
 
-// Patient Service
-
 class PatientService extends ChangeNotifier {
   List<Patient> _patients = [];
 
@@ -24,14 +22,12 @@ class PatientService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Save all patients to storage
   Future<void> _savePatients() async {
     final prefs = await SharedPreferences.getInstance();
     final list = _patients.map((e) => e.toJson()).toList();
     await prefs.setStringList('patients_list', list);
   }
 
-  /// Add a new patient or update existing one
   Future<void> savePatient(Patient patient) async {
     final index = _patients.indexWhere((p) => p.id == patient.id);
     if (index >= 0) {
@@ -43,7 +39,6 @@ class PatientService extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Delete a patient
   Future<void> deletePatient(String patientId) async {
     _patients.removeWhere((p) => p.id == patientId);
     await _savePatients();
@@ -55,27 +50,22 @@ class PatientService extends ChangeNotifier {
 // Prescription Service
 // ============================================================================
 
-/// Simple service to manage prescriptions - combines data storage and state management
 class PrescriptionService extends ChangeNotifier {
   List<Prescription> _prescriptions = [];
 
   List<Prescription> get prescriptions => _prescriptions;
 
-  /// Load all prescriptions from storage
   Future<void> loadPrescriptions() async {
     final prefs = await SharedPreferences.getInstance();
     final data = prefs.getStringList('prescriptions_list') ?? [];
     _prescriptions = data.map((e) => Prescription.fromJson(e)).toList();
-    // Seed demo prescriptions on first run (when none exist)
     if (_prescriptions.isEmpty) {
-      // Ensure there's at least one patient to attach to
       final patientData = prefs.getStringList('patients_list') ?? [];
       List<Patient> storedPatients = patientData
           .map((e) => Patient.fromJson(e))
           .toList();
 
       if (storedPatients.isEmpty) {
-        // Create and persist demo patients if none exist yet
         storedPatients = _buildDemoPatients();
         await prefs.setStringList(
           'patients_list',
@@ -83,10 +73,8 @@ class PrescriptionService extends ChangeNotifier {
         );
       }
 
-      // Create three demo prescriptions mapped to three types
       final rxList = <Prescription>[];
       if (storedPatients.isNotEmpty) {
-        // Regular
         rxList.add(
           _buildDemoPrescriptionFor(
             patientId: storedPatients[0].id,
@@ -95,7 +83,6 @@ class PrescriptionService extends ChangeNotifier {
         );
       }
       if (storedPatients.length > 1) {
-        // Psychotropic
         rxList.add(
           _buildDemoPrescriptionFor(
             patientId: storedPatients[1].id,
@@ -104,7 +91,6 @@ class PrescriptionService extends ChangeNotifier {
         );
       }
       if (storedPatients.length > 2) {
-        // Narcotic
         rxList.add(
           _buildDemoPrescriptionFor(
             patientId: storedPatients[2].id,
@@ -116,19 +102,16 @@ class PrescriptionService extends ChangeNotifier {
       _prescriptions = rxList;
       await _savePrescriptions();
     }
-    // Sort by most recent first
     _prescriptions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     notifyListeners();
   }
 
-  /// Save all prescriptions to storage
   Future<void> _savePrescriptions() async {
     final prefs = await SharedPreferences.getInstance();
     final list = _prescriptions.map((e) => e.toJson()).toList();
     await prefs.setStringList('prescriptions_list', list);
   }
 
-  /// Add a new prescription or update existing one
   Future<void> savePrescription(Prescription prescription) async {
     final index = _prescriptions.indexWhere((p) => p.id == prescription.id);
     if (index >= 0) {
@@ -136,38 +119,31 @@ class PrescriptionService extends ChangeNotifier {
     } else {
       _prescriptions.add(prescription);
     }
-    // Keep sorted by most recent
     _prescriptions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     await _savePrescriptions();
     notifyListeners();
   }
 
-  /// Get recent prescriptions (default 10)
   List<Prescription> getRecentPrescriptions([int limit = 10]) {
     return _prescriptions.take(limit).toList();
   }
 
-  /// Get all prescriptions for a specific patient
   List<Prescription> getPrescriptionsByPatient(String patientId) {
     return _prescriptions.where((p) => p.patientId == patientId).toList();
   }
 
-  /// Delete a prescription
   Future<void> deletePrescription(String prescriptionId) async {
     _prescriptions.removeWhere((p) => p.id == prescriptionId);
     await _savePrescriptions();
     notifyListeners();
   }
 
-  /// Delete all prescriptions for a patient
   Future<void> deletePrescriptionsByPatient(String patientId) async {
     _prescriptions.removeWhere((p) => p.patientId == patientId);
     await _savePrescriptions();
     notifyListeners();
   }
 }
-
-// Doctor Profile Service
 
 class DoctorProfileService extends ChangeNotifier {
   static const _prefsKey = 'doctor_profile';
@@ -209,8 +185,6 @@ class DoctorProfileService extends ChangeNotifier {
     }
   }
 }
-
-// Demo Seed Builders
 
 List<Patient> _buildDemoPatients() {
   return [

@@ -62,16 +62,16 @@ enum Sex { male, female }
 
 class Patient {
   final String id;
-  final String familyName; // Овог
-  final String givenName; // Нэр
-  final DateTime birthDate; // Төрсөн огноо
-  final Sex sex; // Хүйс
+  final String familyName;
+  final String givenName;
+  final DateTime birthDate;
+  final Sex sex;
 
-  final String registrationNumber; // Регистрийн дугаар
-  final String phone; // Утас
-  final String address; // Хаяг
-  final String diagnosis; // Онош (Mongolian)
-  final String icd; // ICD code
+  final String registrationNumber;
+  final String phone;
+  final String address;
+  final String diagnosis;
+  final String icd;
 
   Patient({
     required this.id,
@@ -169,19 +169,19 @@ enum PrescriptionType { regular, psychotropic, narcotic }
 class Prescription {
   final String id;
   final String patientId;
-  final String diagnosis; // Mongolian diagnosis text
-  final String icd; // ICD code
+  final String diagnosis;
+  final String icd;
   final PrescriptionType type;
   final List<Drug> drugs;
   final String? notes;
-  final String? guardianName; // if patient < 16
+  final String? guardianName;
   final String? guardianPhone;
-  final String? attachmentPath; // optional custom image path
+  final String? attachmentPath;
   final int? treatmentDays;
   final String? doctorName;
   final String? doctorPhone;
   final String? clinicName;
-  final bool? clinicStamp; // Whether clinic stamp applied
+  final bool? clinicStamp;
   final bool? generalDoctorSignature;
   final String? ePrescriptionCode;
   final String? specialIndex;

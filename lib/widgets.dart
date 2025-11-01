@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'models.dart';
 
-// App Bottom Navigation Widget
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
@@ -109,7 +108,6 @@ class AppBottomNav extends StatelessWidget {
   }
 }
 
-// Drug Input Widget
 class DrugInput extends StatefulWidget {
   const DrugInput({
     super.key,

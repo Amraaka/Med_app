@@ -24,30 +24,30 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
   final _guardianPhoneCtrl = TextEditingController();
   final _diagnosisCtrl = TextEditingController();
   final _icdCtrl = TextEditingController();
-  // Patient info fields
+
   final _regNoCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
-  // Doctor/clinic fields
+
   final _doctorNameCtrl = TextEditingController();
   final _doctorPhoneCtrl = TextEditingController();
   final _clinicNameCtrl = TextEditingController();
   bool _clinicStamp = false;
   bool _generalDoctorSignature = false;
   final _ePrescriptionCodeCtrl = TextEditingController();
-  // Special (psychotropic/narcotic) fields
+
   final _specialIndexCtrl = TextEditingController();
   final _serialNumberCtrl = TextEditingController();
   final _receiverNameCtrl = TextEditingController();
   final _receiverRegCtrl = TextEditingController();
   final _receiverPhoneCtrl = TextEditingController();
-  // Narcotic option
+
   bool _isPalliative = false;
 
   @override
   void initState() {
     super.initState();
-    // Prefill with patient's existing data if available
+
     _diagnosisCtrl.text = widget.patient.diagnosis;
     _icdCtrl.text = widget.patient.icd;
     _regNoCtrl.text = widget.patient.registrationNumber;

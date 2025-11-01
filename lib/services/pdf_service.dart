@@ -286,11 +286,14 @@ class PdfService {
 
   static pw.Widget _buildTopHeader(pw.TextStyle style) {
     return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.center,
+      crossAxisAlignment: pw.CrossAxisAlignment.end,
       children: [
-        pw.Text(_headerText1, style: style, textAlign: pw.TextAlign.center),
-        pw.Text(_headerText2, style: style, textAlign: pw.TextAlign.center),
-        pw.Text(_headerText3, style: style, textAlign: pw.TextAlign.center),
+        pw.SizedBox(height: 12),
+
+        pw.Text(_headerText1, style: style, textAlign: pw.TextAlign.end),
+        pw.Text(_headerText2, style: style, textAlign: pw.TextAlign.end),
+        pw.Text(_headerText3, style: style, textAlign: pw.TextAlign.end),
+        pw.SizedBox(height: 6),
       ],
     );
   }
@@ -397,24 +400,25 @@ class PdfService {
                 ),
                 pw.SizedBox(height: 18),
                 ..._buildDrugSection(presc, style, styleBold),
+                pw.SizedBox(height: 20),
                 pw.Container(
                   height: 0.5,
                   color: PdfColors.grey800,
                   margin: const pw.EdgeInsets.symmetric(vertical: 2),
                 ),
+                pw.SizedBox(height: 12),
                 pw.Text(
                   'Жор бичсэн эмчийн нэр, утас: ${_safeStr(presc.doctorName)} ${_safeStr(presc.doctorPhone)}',
                   style: style,
                 ),
-                pw.SizedBox(height: 6),
+                pw.SizedBox(height: 12),
                 pw.Text('Тэмдэг: _________________', style: style),
-                pw.SizedBox(height: 6),
+                pw.SizedBox(height: 12),
                 pw.Text(
                   'Эмнэлгийн нэр: ${_safeStr(presc.clinicName)}',
                   style: style,
                 ),
                 pw.SizedBox(height: 8),
-                // Tear-off line
                 pw.Row(
                   children: List.generate(
                     80,
@@ -426,7 +430,7 @@ class PdfService {
                     ),
                   ),
                 ),
-                pw.SizedBox(height: 10),
+                pw.SizedBox(height: 12),
               ],
             ),
           ),
@@ -459,7 +463,6 @@ class PdfService {
     for (int i = 0; i < 3; i++) {
       if (i < drugs.length) {
         final drug = drugs[i];
-        // Build drug info string
         String drugInfo = _safeStr(drug.mongolianName);
         if (drug.dose.isNotEmpty) {
           drugInfo += ' ${drug.dose}';
@@ -487,7 +490,7 @@ class PdfService {
               ),
             ],
           ),
-          pw.SizedBox(height: 2),
+          pw.SizedBox(height: 12),
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [

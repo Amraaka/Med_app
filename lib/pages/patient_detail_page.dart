@@ -87,7 +87,6 @@ class PatientDetailPage extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Actions
           Row(
             children: [
               Expanded(
@@ -333,7 +332,7 @@ class PatientDetailPage extends StatelessWidget {
                               },
                               icon: const Icon(Icons.image, size: 16),
                               label: const Text(
-                                'PNG харах',
+                                'Хэвлэх',
                                 style: TextStyle(fontSize: 12),
                               ),
                             ),
