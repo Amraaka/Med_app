@@ -53,6 +53,20 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
     _regNoCtrl.text = widget.patient.registrationNumber;
     _phoneCtrl.text = widget.patient.phone;
     _addressCtrl.text = widget.patient.address;
+
+    // Prefill doctor info from profile after first frame (Provider is ready)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profile = context.read<DoctorProfileService>().profile;
+      if (profile.name.isNotEmpty) {
+        _doctorNameCtrl.text = profile.name;
+      }
+      if (profile.phone.isNotEmpty) {
+        _doctorPhoneCtrl.text = profile.phone;
+      }
+      if (profile.clinicName.isNotEmpty) {
+        _clinicNameCtrl.text = profile.clinicName;
+      }
+    });
   }
 
   @override
@@ -542,6 +556,30 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
                       const Text(
                         'Эмч ба байгууллага',
                         style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 8),
+                      Builder(
+                        builder: (context) {
+                          final profile = context
+                              .watch<DoctorProfileService>()
+                              .profile;
+                          return Row(
+                            children: [
+                              const Icon(Icons.info_outline, size: 16),
+                              const SizedBox(width: 6),
+
+                              TextButton(
+                                onPressed: () {
+                                  // Allow quick fill/refresh from profile if user edited it elsewhere
+                                  _doctorNameCtrl.text = profile.name;
+                                  _doctorPhoneCtrl.text = profile.phone;
+                                  _clinicNameCtrl.text = profile.clinicName;
+                                },
+                                child: const Text('Дахин бөглөх'),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                       const SizedBox(height: 8),
                       Row(

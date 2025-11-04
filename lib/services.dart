@@ -151,6 +151,8 @@ class DoctorProfileService extends ChangeNotifier {
     name: 'Др. Ариун',
     title: 'Дотрын эмч',
     location: 'Улаанбаатар, Монгол',
+    phone: '77112233',
+    clinicName: 'Мед Клиник',
   );
 
   DoctorProfile get profile => _profile;
@@ -158,8 +160,12 @@ class DoctorProfileService extends ChangeNotifier {
   Future<void> loadProfile() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_prefsKey);
-    if (raw != null) {
-      _profile = DoctorProfile.fromJson(raw);
+    try {
+      if (raw != null) {
+        _profile = DoctorProfile.fromJson(raw);
+      }
+    } catch (_) {
+      // If stored data is corrupted or incompatible, keep defaults
     }
     notifyListeners();
   }

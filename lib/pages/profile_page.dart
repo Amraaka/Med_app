@@ -47,6 +47,8 @@ class _ProfilePageState extends State<ProfilePage> {
               name: doctorSvc.profile.name,
               title: doctorSvc.profile.title,
               location: doctorSvc.profile.location,
+              phone: doctorSvc.profile.phone,
+              clinicName: doctorSvc.profile.clinicName,
               imageAssetPath:
                   doctorSvc.profile.photoPath ??
                   'assets/images/ColoradoBusinessCenter.jpg',
@@ -196,6 +198,8 @@ class _DoctorProfileHeader extends StatelessWidget {
     required this.name,
     required this.title,
     required this.location,
+    required this.phone,
+    required this.clinicName,
     required this.imageAssetPath,
     this.isFileImage = false,
     this.onEdit,
@@ -204,6 +208,8 @@ class _DoctorProfileHeader extends StatelessWidget {
   final String name;
   final String title;
   final String location;
+  final String phone;
+  final String clinicName;
   final String imageAssetPath;
   final bool isFileImage;
   final VoidCallback? onEdit;
@@ -220,7 +226,7 @@ class _DoctorProfileHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 14,
                 offset: const Offset(0, 6),
               ),
@@ -267,7 +273,7 @@ class _DoctorProfileHeader extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
+                          color: Colors.black.withValues(alpha: 0.08),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -337,6 +343,46 @@ class _DoctorProfileHeader extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 6),
+              if (clinicName.isNotEmpty)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.local_hospital,
+                      size: 16,
+                      color: Colors.black54,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        clinicName,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              if (phone.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.phone, size: 16, color: Colors.black54),
+                    const SizedBox(width: 4),
+                    Text(
+                      phone,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.black54,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -352,7 +398,10 @@ extension on _ProfilePageState {
     final nameController = TextEditingController(text: profile.name);
     final titleController = TextEditingController(text: profile.title);
     final locationController = TextEditingController(text: profile.location);
+    final phoneController = TextEditingController(text: profile.phone);
+    final clinicController = TextEditingController(text: profile.clinicName);
     String? tempPhotoPath = profile.photoPath;
+    String? tempSignaturePath = profile.signaturePath;
 
     await showModalBottomSheet(
       context: context,
@@ -443,6 +492,83 @@ extension on _ProfilePageState {
                       border: OutlineInputBorder(),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: clinicController,
+                    decoration: const InputDecoration(
+                      labelText: 'Эмнэлэг/байгууллагын нэр',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(
+                      labelText: 'Утасны дугаар',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Эмчийн гарын үсэг (зураг)',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        width: 120,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: tempSignaturePath == null
+                            ? Center(
+                                child: Text(
+                                  'Байхгүй',
+                                  style: TextStyle(color: Colors.grey[600]),
+                                ),
+                              )
+                            : Image.file(
+                                File(tempSignaturePath!),
+                                fit: BoxFit.contain,
+                              ),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final picker = ImagePicker();
+                          final picked = await picker.pickImage(
+                            source: ImageSource.gallery,
+                            maxWidth: 1024,
+                          );
+                          if (picked != null) {
+                            final saved = await doctorSvc.savePickedImage(
+                              File(picked.path),
+                            );
+                            if (saved != null) {
+                              setModalState(() => tempSignaturePath = saved);
+                            }
+                          }
+                        },
+                        icon: const Icon(Icons.border_color),
+                        label: const Text('Гарын үсэг сонгох'),
+                      ),
+                      const SizedBox(width: 8),
+                      if (tempSignaturePath != null)
+                        TextButton(
+                          onPressed: () =>
+                              setModalState(() => tempSignaturePath = null),
+                          child: const Text('Цэвэрлэх'),
+                        ),
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -459,6 +585,9 @@ extension on _ProfilePageState {
                             title: titleController.text.trim(),
                             location: locationController.text.trim(),
                             photoPath: tempPhotoPath,
+                            phone: phoneController.text.trim(),
+                            clinicName: clinicController.text.trim(),
+                            signaturePath: tempSignaturePath,
                           );
                           await doctorSvc.updateProfile(updated);
                           if (mounted) Navigator.pop(ctx);

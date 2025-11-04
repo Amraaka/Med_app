@@ -289,22 +289,22 @@ class PatientDetailPage extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                       child: Row(
                         children: [
-                          Expanded(
-                            child: TextButton.icon(
-                              onPressed: () async {
-                                await PdfService.showPrescriptionPdf(
-                                  context,
-                                  patient,
-                                  presc,
-                                );
-                              },
-                              icon: const Icon(Icons.picture_as_pdf, size: 16),
-                              label: const Text(
-                                'PDF харах',
-                                style: TextStyle(fontSize: 12),
-                              ),
-                            ),
-                          ),
+                          // Expanded(
+                          //   child: TextButton.icon(
+                          //     onPressed: () async {
+                          //       await PdfService.showPrescriptionPdf(
+                          //         context,
+                          //         patient,
+                          //         presc,
+                          //       );
+                          //     },
+                          //     icon: const Icon(Icons.picture_as_pdf, size: 16),
+                          //     label: const Text(
+                          //       'PDF харах',
+                          //       style: TextStyle(fontSize: 12),
+                          //     ),
+                          //   ),
+                          // ),
                           Expanded(
                             child: TextButton.icon(
                               onPressed: () async {

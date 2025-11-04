@@ -369,17 +369,17 @@ class _HomePageState extends State<HomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton.icon(
-                    onPressed: () async {
-                      await PdfService.showPrescriptionPdf(
-                        context,
-                        patient,
-                        presc,
-                      );
-                    },
-                    icon: const Icon(Icons.picture_as_pdf, size: 16),
-                    label: const Text('PDF', style: TextStyle(fontSize: 12)),
-                  ),
+                  // TextButton.icon(
+                  //   onPressed: () async {
+                  //     await PdfService.showPrescriptionPdf(
+                  //       context,
+                  //       patient,
+                  //       presc,
+                  //     );
+                  //   },
+                  //   icon: const Icon(Icons.picture_as_pdf, size: 16),
+                  //   label: const Text('PDF', style: TextStyle(fontSize: 12)),
+                  // ),
                   TextButton.icon(
                     onPressed: () async {
                       final pngBytes = await PdfService.generatePrescriptionPng(

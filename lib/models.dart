@@ -296,11 +296,19 @@ class DoctorProfile {
   final String location;
   final String? photoPath;
 
+  // Added fields to support prescription autofill
+  final String phone; // Doctor phone number
+  final String clinicName; // Hospital/clinic name
+  final String? signaturePath; // Path to doctor signature image
+
   const DoctorProfile({
     required this.name,
     required this.title,
     required this.location,
     this.photoPath,
+    this.phone = '',
+    this.clinicName = '',
+    this.signaturePath,
   });
 
   DoctorProfile copyWith({
@@ -308,11 +316,17 @@ class DoctorProfile {
     String? title,
     String? location,
     String? photoPath,
+    String? phone,
+    String? clinicName,
+    String? signaturePath,
   }) => DoctorProfile(
     name: name ?? this.name,
     title: title ?? this.title,
     location: location ?? this.location,
     photoPath: photoPath ?? this.photoPath,
+    phone: phone ?? this.phone,
+    clinicName: clinicName ?? this.clinicName,
+    signaturePath: signaturePath ?? this.signaturePath,
   );
 
   Map<String, dynamic> toMap() => {
@@ -320,14 +334,30 @@ class DoctorProfile {
     'title': title,
     'location': location,
     'photoPath': photoPath,
+    'phone': phone,
+    'clinicName': clinicName,
+    'signaturePath': signaturePath,
   };
 
-  factory DoctorProfile.fromMap(Map<String, dynamic> map) => DoctorProfile(
-    name: (map['name'] as String?) ?? '',
-    title: (map['title'] as String?) ?? '',
-    location: (map['location'] as String?) ?? '',
-    photoPath: map['photoPath'] as String?,
-  );
+  factory DoctorProfile.fromMap(Map<String, dynamic> map) {
+    String _asString(dynamic v, [String fallback = '']) {
+      if (v == null) return fallback;
+      if (v is String) return v;
+      return v.toString();
+    }
+
+    return DoctorProfile(
+      name: _asString(map['name']),
+      title: _asString(map['title']),
+      location: _asString(map['location']),
+      photoPath: map['photoPath'] is String ? map['photoPath'] as String : null,
+      phone: _asString(map['phone']),
+      clinicName: _asString(map['clinicName']),
+      signaturePath: map['signaturePath'] is String
+          ? map['signaturePath'] as String
+          : null,
+    );
+  }
 
   String toJson() => json.encode(toMap());
   factory DoctorProfile.fromJson(String source) =>

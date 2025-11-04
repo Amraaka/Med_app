@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'dart:convert' show json;
+import 'dart:async';
 import 'models.dart';
 
 class AppBottomNav extends StatelessWidget {
@@ -124,13 +127,73 @@ class DrugInput extends StatefulWidget {
   State<DrugInput> createState() => _DrugInputState();
 }
 
+// Singleton cache for drug catalog shared across all DrugInput instances
+class _DrugCatalogCache {
+  static _DrugCatalogCache? _instance;
+  static _DrugCatalogCache get instance => _instance ??= _DrugCatalogCache._();
+  _DrugCatalogCache._();
+
+  List<Drug>? _catalog;
+  Future<List<Drug>>? _loadingFuture;
+
+  Future<List<Drug>> load() async {
+    // Return cached catalog if available
+    if (_catalog != null) return _catalog!;
+
+    // Return existing loading operation if in progress
+    if (_loadingFuture != null) return _loadingFuture!;
+
+    // Start new loading operation
+    _loadingFuture = _loadCatalogInternal();
+    try {
+      _catalog = await _loadingFuture!;
+      return _catalog!;
+    } finally {
+      _loadingFuture = null;
+    }
+  }
+
+  Future<List<Drug>> _loadCatalogInternal() async {
+    try {
+      final raw = await rootBundle.loadString('assets/data/drugs.json');
+      final parsed = (json.decode(raw) as List<dynamic>?) ?? const [];
+      final items = parsed.map((e) {
+        final m = e as Map<String, dynamic>;
+        return Drug(
+          mongolianName: (m['name'] as String?) ?? '',
+          dose: (m['dose'] as String?) ?? '',
+          form: (m['form'] as String?) ?? '',
+          quantity: (m['quantity'] as num?)?.toInt() ?? 0,
+          instructions: (m['instruction'] as String?) ?? '',
+          treatmentDays: (m['days'] as num?)?.toInt(),
+        );
+      }).toList();
+      debugPrint('Drug catalog loaded: ${items.length} items');
+      return items;
+    } catch (e) {
+      debugPrint('Failed to load drug catalog: $e');
+      return [];
+    }
+  }
+
+  void clear() {
+    _catalog = null;
+    _loadingFuture = null;
+  }
+}
+
 class _DrugInputState extends State<DrugInput> {
   late final TextEditingController _mnCtrl;
+  late final FocusNode _mnFocus;
   late final TextEditingController _doseCtrl;
   late final TextEditingController _formCtrl;
   late final TextEditingController _qtyCtrl;
   late final TextEditingController _instrCtrl;
   late final TextEditingController _daysCtrl;
+
+  List<Drug> _catalog = const [];
+  bool _loadingCatalog = false;
+  Timer? _debounceTimer;
 
   static const TextStyle _inputTextStyle = TextStyle(
     fontFamily: 'NotoSans',
@@ -147,6 +210,7 @@ class _DrugInputState extends State<DrugInput> {
   void initState() {
     super.initState();
     _mnCtrl = TextEditingController(text: widget.initial?.mongolianName ?? '');
+    _mnFocus = FocusNode();
     _doseCtrl = TextEditingController(text: widget.initial?.dose ?? '');
     _formCtrl = TextEditingController(text: widget.initial?.form ?? '');
     _qtyCtrl = TextEditingController(
@@ -160,17 +224,33 @@ class _DrugInputState extends State<DrugInput> {
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _emit());
+    _loadDrugCatalog();
   }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _mnCtrl.dispose();
+    _mnFocus.dispose();
     _doseCtrl.dispose();
     _formCtrl.dispose();
     _qtyCtrl.dispose();
     _instrCtrl.dispose();
     _daysCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadDrugCatalog() async {
+    if (_loadingCatalog) return;
+    setState(() => _loadingCatalog = true);
+    try {
+      final items = await _DrugCatalogCache.instance.load();
+      if (mounted) {
+        setState(() => _catalog = items);
+      }
+    } finally {
+      if (mounted) setState(() => _loadingCatalog = false);
+    }
   }
 
   void _emit() {
@@ -188,6 +268,11 @@ class _DrugInputState extends State<DrugInput> {
     );
   }
 
+  void _debouncedEmit() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), _emit);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -199,21 +284,147 @@ class _DrugInputState extends State<DrugInput> {
             Row(
               children: [
                 Expanded(
-                  child: TextFormField(
-                    controller: _mnCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Эмийн нэр ',
-                      border: OutlineInputBorder(),
-                    ),
-                    style: _inputTextStyle,
-                    onChanged: (_) => _emit(),
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Эмийн нэр заавал'
-                        : null,
+                  child: RawAutocomplete<Drug>(
+                    textEditingController: _mnCtrl,
+                    focusNode: _mnFocus,
+                    displayStringForOption: (d) => d.mongolianName,
+                    optionsBuilder: (TextEditingValue tev) {
+                      final q = tev.text.trim();
+                      if (q.isEmpty || _catalog.isEmpty) {
+                        return const Iterable<Drug>.empty();
+                      }
+
+                      // Fast filtering with early exit
+                      final qLower = q.toLowerCase();
+                      final results = <Drug>[];
+                      final seen = <String>{};
+
+                      for (final drug in _catalog) {
+                        if (results.length >= 20)
+                          break; // Early exit when we have enough
+
+                        if (drug.mongolianName.isEmpty) continue;
+
+                        final key =
+                            '${drug.mongolianName}|${drug.dose}|${drug.form}';
+                        if (!seen.add(key)) continue; // Skip duplicates
+
+                        final name = drug.mongolianName.toLowerCase();
+                        final form = drug.form.toLowerCase();
+                        final dose = drug.dose.toLowerCase();
+
+                        // Check for match
+                        if (name.contains(qLower) ||
+                            form.contains(qLower) ||
+                            dose.contains(qLower)) {
+                          results.add(drug);
+                        }
+                      }
+
+                      return results;
+                    },
+                    onSelected: (Drug selected) {
+                      // Batch updates to avoid multiple rebuilds
+                      _mnCtrl.text = selected.mongolianName;
+                      _doseCtrl.text = selected.dose;
+                      _formCtrl.text = selected.form;
+                      if (selected.quantity > 0) {
+                        _qtyCtrl.text = selected.quantity.toString();
+                      }
+                      if ((selected.treatmentDays ?? 0) > 0) {
+                        _daysCtrl.text = selected.treatmentDays.toString();
+                      }
+                      if (selected.instructions.isNotEmpty) {
+                        _instrCtrl.text = selected.instructions;
+                      }
+                      // Immediate emit for selection
+                      _emit();
+                    },
+                    fieldViewBuilder:
+                        (context, controller, focusNode, onFieldSubmitted) {
+                          return TextFormField(
+                            controller: controller,
+                            focusNode: focusNode,
+                            decoration: InputDecoration(
+                              labelText: _loadingCatalog
+                                  ? 'Эмийн нэр (унаж байна...)'
+                                  : _catalog.isEmpty
+                                  ? 'Эмийн нэр'
+                                  : 'Эмийн нэр (${_catalog.length} эм)',
+                              border: const OutlineInputBorder(),
+                              helperText: _catalog.isEmpty && !_loadingCatalog
+                                  ? 'Жагсаалт ачаалагдаагүй'
+                                  : null,
+                            ),
+                            style: _inputTextStyle,
+                            onChanged: (_) => _debouncedEmit(),
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Эмийн нэр заавал'
+                                : null,
+                          );
+                        },
+                    optionsViewBuilder: (context, onSelected, options) {
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        widthFactor: 1.0,
+                        child: Material(
+                          elevation: 4,
+                          borderRadius: BorderRadius.circular(8),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(
+                              maxHeight: 300,
+                              minWidth: 200,
+                            ),
+                            child: ListView.builder(
+                              padding: EdgeInsets.zero,
+                              itemCount: options.length,
+                              itemBuilder: (context, index) {
+                                final d = options.elementAt(index);
+                                return ListTile(
+                                  dense: true,
+                                  title: Text(
+                                    d.mongolianName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    [
+                                      if (d.dose.isNotEmpty) d.dose,
+                                      if (d.form.isNotEmpty) d.form,
+                                    ].join(' • '),
+                                  ),
+                                  onTap: () => onSelected(d),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
+            if (!_loadingCatalog && _catalog.isEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.info_outline, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'Эмийн жагсаалтыг ачаалж чадсангүй. Assets бүртгэл шалгана уу.',
+                      style: TextStyle(color: Colors.grey[700], fontSize: 12),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _loadDrugCatalog,
+                    child: const Text('Дахин ачаалах'),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 12),
             Row(
               children: [
@@ -228,7 +439,7 @@ class _DrugInputState extends State<DrugInput> {
                           border: OutlineInputBorder(),
                         ),
                         style: _inputTextStyle,
-                        onChanged: (_) => _emit(),
+                        onChanged: (_) => _debouncedEmit(),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
@@ -239,7 +450,7 @@ class _DrugInputState extends State<DrugInput> {
                         ),
                         keyboardType: TextInputType.number,
                         style: _inputTextStyle,
-                        onChanged: (_) => _emit(),
+                        onChanged: (_) => _debouncedEmit(),
                         validator: (v) => (int.tryParse(v ?? '') ?? 0) <= 0
                             ? 'Тоо зөв оруул'
                             : null,
@@ -259,7 +470,7 @@ class _DrugInputState extends State<DrugInput> {
                           border: OutlineInputBorder(),
                         ),
                         style: _inputTextStyle,
-                        onChanged: (_) => _emit(),
+                        onChanged: (_) => _debouncedEmit(),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
@@ -270,7 +481,7 @@ class _DrugInputState extends State<DrugInput> {
                         ),
                         keyboardType: TextInputType.number,
                         style: _inputTextStyle,
-                        onChanged: (_) => _emit(),
+                        onChanged: (_) => _debouncedEmit(),
                         validator: (v) {
                           final val = int.tryParse(v ?? '');
                           if (val == null || val <= 0) return 'Хоног зөв';
@@ -291,7 +502,7 @@ class _DrugInputState extends State<DrugInput> {
               ),
               maxLines: 2,
               style: _inputTextStyle,
-              onChanged: (_) => _emit(),
+              onChanged: (_) => _debouncedEmit(),
             ),
             const SizedBox(height: 8),
             Align(
