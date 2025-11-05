@@ -212,13 +212,13 @@ class PatientDetailPage extends StatelessWidget {
                 child: Column(
                   children: [
                     InkWell(
-                      onTap: () async {
-                        await PdfService.showPrescriptionPdf(
-                          context,
-                          patient,
-                          presc,
-                        );
-                      },
+                      // onTap: () async {
+                      //   await PdfService.showPrescriptionPdf(
+                      //     context,
+                      //     patient,
+                      //     presc,
+                      //   );
+                      // },
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(8),
                       ),

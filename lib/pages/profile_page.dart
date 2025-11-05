@@ -6,6 +6,7 @@ import '../models.dart';
 import '../services.dart';
 import 'patient_form_page.dart';
 import 'patient_detail_page.dart';
+import 'drugs_management_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -262,6 +263,9 @@ class _DoctorProfileHeader extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
+
+              // Drugs Management Button
+              const SizedBox(height: 16),
               // Avatar centered with subtle white ring
               Stack(
                 clipBehavior: Clip.none,
@@ -383,6 +387,30 @@ class _DoctorProfileHeader extends StatelessWidget {
                   ],
                 ),
               ],
+              SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const DrugsManagementPage(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.medication, size: 18),
+                  label: const Text('Эмийн жагсаалт'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

@@ -510,7 +510,7 @@ class _DrugInputState extends State<DrugInput> {
               child: TextButton.icon(
                 onPressed: widget.onRemove,
                 icon: const Icon(Icons.delete_outline),
-                label: const Text('Remove'),
+                label: const Text('Устгах'),
               ),
             ),
           ],

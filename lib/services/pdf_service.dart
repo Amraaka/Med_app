@@ -98,9 +98,9 @@ class PdfService {
         crossAxisAlignment: pw.CrossAxisAlignment.stretch,
         children: [
           _buildTopHeader(styleSmall),
-          pw.SizedBox(height: 3),
+          pw.SizedBox(height: 2),
           _buildPrescriptionBox(patient, presc, styleTitle, style, styleBold),
-          pw.SizedBox(height: 3),
+          pw.SizedBox(height: 2),
           _buildBottomTable(presc, style, styleBold),
         ],
       ),
@@ -256,7 +256,7 @@ class PdfService {
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
               _buildTopHeader(styleSmall),
-              pw.SizedBox(height: 3),
+              pw.SizedBox(height: 1),
               _buildPrescriptionBox(
                 patient,
                 presc,
@@ -288,12 +288,11 @@ class PdfService {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.end,
       children: [
-        pw.SizedBox(height: 12),
-
+        pw.SizedBox(height: 3),
         pw.Text(_headerText1, style: style, textAlign: pw.TextAlign.end),
         pw.Text(_headerText2, style: style, textAlign: pw.TextAlign.end),
         pw.Text(_headerText3, style: style, textAlign: pw.TextAlign.end),
-        pw.SizedBox(height: 6),
+        pw.SizedBox(height: 3),
       ],
     );
   }
@@ -314,14 +313,14 @@ class PdfService {
         crossAxisAlignment: pw.CrossAxisAlignment.stretch,
         mainAxisSize: pw.MainAxisSize.max,
         children: [
-          pw.SizedBox(height: 6),
+          pw.SizedBox(height: 4),
           pw.Center(
             child: pw.Text(_titleByType(presc.type), style: styleTitle),
           ),
-          pw.SizedBox(height: 8),
+          pw.SizedBox(height: 4),
 
           pw.Padding(
-            padding: pw.EdgeInsets.all(6),
+            padding: pw.EdgeInsets.all(4),
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.stretch,
               children: [
@@ -329,7 +328,7 @@ class PdfService {
                   alignment: pw.Alignment.centerRight,
                   child: pw.Text(_formatDate(presc.createdAt), style: style),
                 ),
-                pw.SizedBox(height: 12),
+                pw.SizedBox(height: 4),
                 pw.Row(
                   children: [
                     pw.Text('Өвчтөний овог, нэр: ', style: style),
@@ -346,7 +345,7 @@ class PdfService {
                     ),
                   ],
                 ),
-                pw.SizedBox(height: 10),
+                pw.SizedBox(height: 4),
                 pw.Row(
                   children: [
                     pw.Text('Нас: ', style: style),
@@ -357,7 +356,7 @@ class PdfService {
                       ),
                       child: pw.Text('${patient.age}', style: style),
                     ),
-                    pw.SizedBox(width: 8),
+                    pw.SizedBox(width: 6),
                     pw.Text('Хүйс: ', style: style),
                     pw.Container(
                       width: 18,
@@ -369,7 +368,7 @@ class PdfService {
                         style: style,
                       ),
                     ),
-                    pw.SizedBox(width: 8),
+                    pw.SizedBox(width: 6),
                     pw.Text('Онош: ', style: style),
                     pw.Expanded(
                       child: pw.Container(
@@ -381,7 +380,7 @@ class PdfService {
                     ),
                   ],
                 ),
-                pw.SizedBox(height: 10),
+                pw.SizedBox(height: 4),
                 pw.Row(
                   children: [
                     pw.Text('Регистрийн №: ', style: style),
@@ -398,27 +397,27 @@ class PdfService {
                     ),
                   ],
                 ),
-                pw.SizedBox(height: 18),
+                pw.SizedBox(height: 6),
                 ..._buildDrugSection(presc, style, styleBold),
-                pw.SizedBox(height: 20),
+                pw.SizedBox(height: 6),
                 pw.Container(
                   height: 0.5,
                   color: PdfColors.grey800,
-                  margin: const pw.EdgeInsets.symmetric(vertical: 2),
+                  margin: const pw.EdgeInsets.symmetric(vertical: 1),
                 ),
-                pw.SizedBox(height: 12),
+                pw.SizedBox(height: 4),
                 pw.Text(
                   'Жор бичсэн эмчийн нэр, утас: ${_safeStr(presc.doctorName)} ${_safeStr(presc.doctorPhone)}',
                   style: style,
                 ),
-                pw.SizedBox(height: 12),
+                pw.SizedBox(height: 4),
                 pw.Text('Тэмдэг: _________________', style: style),
-                pw.SizedBox(height: 12),
+                pw.SizedBox(height: 4),
                 pw.Text(
                   'Эмнэлгийн нэр: ${_safeStr(presc.clinicName)}',
                   style: style,
                 ),
-                pw.SizedBox(height: 8),
+                pw.SizedBox(height: 4),
                 pw.Row(
                   children: List.generate(
                     80,
@@ -430,7 +429,7 @@ class PdfService {
                     ),
                   ),
                 ),
-                pw.SizedBox(height: 12),
+                pw.SizedBox(height: 4),
               ],
             ),
           ),
@@ -481,7 +480,7 @@ class PdfService {
           ),
           pw.Row(
             children: [
-              pw.SizedBox(width: 20),
+              pw.SizedBox(width: 12),
               pw.Expanded(
                 child: pw.Text(
                   'D.t.d. № ${drug.quantity}${drug.treatmentDays != null ? " (${drug.treatmentDays} хоног)" : ""}',
@@ -490,7 +489,7 @@ class PdfService {
               ),
             ],
           ),
-          pw.SizedBox(height: 12),
+          pw.SizedBox(height: 4),
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
@@ -500,7 +499,7 @@ class PdfService {
               ),
             ],
           ),
-          pw.SizedBox(height: 4),
+          pw.SizedBox(height: 3),
         ]);
       } else {
         // Empty slot for unused prescription lines
@@ -518,7 +517,7 @@ class PdfService {
               ),
             ],
           ),
-          pw.SizedBox(height: 8),
+          pw.SizedBox(height: 4),
           pw.Row(
             children: [
               pw.Text('S: ', style: styleBold),
@@ -532,7 +531,7 @@ class PdfService {
               ),
             ],
           ),
-          pw.SizedBox(height: 4),
+          pw.SizedBox(height: 3),
         ]);
       }
     }
@@ -559,24 +558,24 @@ class PdfService {
         // Header row
         pw.TableRow(
           children: [
-            _tableCell('№', styleBold, center: true, minHeight: 18),
+            _tableCell('№', styleBold, center: true, minHeight: 14),
             _tableCell(
               'Эмийн нэр, тун, хэмжээ, хэлбэр',
               styleBold,
               center: true,
-              minHeight: 18,
+              minHeight: 14,
             ),
             _tableCell(
               'Хэрэглэх арга, хугацаа',
               styleBold,
               center: true,
-              minHeight: 18,
+              minHeight: 14,
             ),
             _tableCell(
               'Олгосон\n/гарын үсэг/',
               styleBold,
               center: true,
-              minHeight: 18,
+              minHeight: 14,
             ),
           ],
         ),
@@ -586,23 +585,23 @@ class PdfService {
             final d = presc.drugs[index];
             return pw.TableRow(
               children: [
-                _tableCell('${index + 1}', style, center: true, minHeight: 28),
+                _tableCell('${index + 1}', style, center: true, minHeight: 22),
                 _tableCell(
                   '${_safeStr(d.mongolianName)}\n${_safeStr(d.dose)}, ${_safeStr(d.form)}, ${d.quantity}',
                   style,
-                  minHeight: 28,
+                  minHeight: 22,
                 ),
-                _tableCell(_safeStr(d.instructions), style, minHeight: 28),
-                _tableCell('', style, minHeight: 28),
+                _tableCell(_safeStr(d.instructions), style, minHeight: 22),
+                _tableCell('', style, minHeight: 22),
               ],
             );
           } else {
             return pw.TableRow(
               children: [
-                _tableCell('${index + 1}', style, center: true, minHeight: 28),
-                _tableCell('', style, minHeight: 28),
-                _tableCell('', style, minHeight: 28),
-                _tableCell('', style, minHeight: 28),
+                _tableCell('${index + 1}', style, center: true, minHeight: 22),
+                _tableCell('', style, minHeight: 22),
+                _tableCell('', style, minHeight: 22),
+                _tableCell('', style, minHeight: 22),
               ],
             );
           }

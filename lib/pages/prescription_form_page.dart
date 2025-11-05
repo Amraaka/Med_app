@@ -54,7 +54,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
     _phoneCtrl.text = widget.patient.phone;
     _addressCtrl.text = widget.patient.address;
 
-    // Prefill doctor info from profile after first frame (Provider is ready)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final profile = context.read<DoctorProfileService>().profile;
       if (profile.name.isNotEmpty) {
@@ -261,7 +260,41 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
 
     await context.read<PrescriptionService>().savePrescription(presc);
 
-    await PdfService.showPrescriptionPdf(context, updatedPatient, presc);
+    final pngBytes = await PdfService.generatePrescriptionPng(
+      updatedPatient,
+      presc,
+      dpi: 300,
+    );
+
+    if (!mounted) return;
+
+    await showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Image.memory(pngBytes, fit: BoxFit.contain),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              right: 16,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
 
     if (!mounted) return;
     Navigator.of(context).pop(presc);
@@ -570,7 +603,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
 
                               TextButton(
                                 onPressed: () {
-                                  // Allow quick fill/refresh from profile if user edited it elsewhere
                                   _doctorNameCtrl.text = profile.name;
                                   _doctorPhoneCtrl.text = profile.phone;
                                   _clinicNameCtrl.text = profile.clinicName;
@@ -812,8 +844,8 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _save,
-                  icon: const Icon(Icons.picture_as_pdf),
-                  label: const Text('Хадгалах ба PDF үүсгэх'),
+                  icon: const Icon(Icons.image),
+                  label: const Text('Хадгалах ба үзэх'),
                 ),
               ),
             ],

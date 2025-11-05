@@ -188,10 +188,11 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
           ),
+          SizedBox(height: 150),
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 120.0),
+        padding: const EdgeInsets.only(bottom: 110.0),
         child: FloatingActionButton.extended(
           onPressed: () async {
             final selected = await Navigator.of(context).push(
@@ -222,9 +223,9 @@ class _HomePageState extends State<HomePage> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () async {
-          await PdfService.showPrescriptionPdf(context, patient, presc);
-        },
+        // onTap: () async {
+        //   await PdfService.showPrescriptionPdf(context, patient, presc);
+        // },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
