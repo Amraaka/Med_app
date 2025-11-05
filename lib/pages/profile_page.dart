@@ -75,7 +75,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(46),
             child: Row(
               children: [
                 Text(
@@ -597,7 +597,7 @@ extension on _ProfilePageState {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 6),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
