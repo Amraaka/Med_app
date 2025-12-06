@@ -1,309 +1,199 @@
 import 'package:flutter/material.dart';
-import 'package:med_app/models.dart';
-import 'package:med_app/services/pediatric_dose_calculator.dart';
+import '../services/pediatric_dose_calculator.dart';
 
-/// Example widget showing how to integrate pediatric dose calculator
-/// into the prescription form for pediatric patients
-class PediatricDoseHelper extends StatelessWidget {
+class PediatricDoseHelper extends StatefulWidget {
+  final int patientAge;
+  final Function(String dose) onDoseCalculated;
+
   const PediatricDoseHelper({
     super.key,
-    required this.patient,
-    required this.adultDose,
-    this.onDoseSelected,
+    required this.patientAge,
+    required this.onDoseCalculated,
   });
 
-  final Patient patient;
-  final String adultDose;
-  final ValueChanged<String>? onDoseSelected;
-
   @override
-  Widget build(BuildContext context) {
-    // Only show for pediatric patients (< 18 years)
-    if (patient.age >= 18) {
-      return const SizedBox.shrink();
-    }
-
-    return Card(
-      color: Colors.blue.shade50,
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.child_care, color: Colors.blue.shade700, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Хүүхдэд зориулсан тун тооцоолох',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.blue.shade900,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Насанд хүрэгчдэд зориулсан тун: $adultDose',
-              style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: () => _showDoseCalculator(context),
-              icon: const Icon(Icons.calculate),
-              label: const Text('Хүүхдийн тун тооцоолох'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade700,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showDoseCalculator(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => _DoseCalculatorDialog(
-        patient: patient,
-        adultDose: adultDose,
-        onDoseSelected: onDoseSelected,
-      ),
-    );
-  }
+  State<PediatricDoseHelper> createState() => _PediatricDoseHelperState();
 }
 
-class _DoseCalculatorDialog extends StatefulWidget {
-  const _DoseCalculatorDialog({
-    required this.patient,
-    required this.adultDose,
-    this.onDoseSelected,
-  });
-
-  final Patient patient;
-  final String adultDose;
-  final ValueChanged<String>? onDoseSelected;
-
-  @override
-  State<_DoseCalculatorDialog> createState() => _DoseCalculatorDialogState();
-}
-
-class _DoseCalculatorDialogState extends State<_DoseCalculatorDialog> {
-  final _weightCtrl = TextEditingController();
-  final _heightCtrl = TextEditingController();
-  DoseCalculationResult? _result;
-
-  @override
-  void dispose() {
-    _weightCtrl.dispose();
-    _heightCtrl.dispose();
-    super.dispose();
-  }
+class _PediatricDoseHelperState extends State<PediatricDoseHelper> {
+  final _adultDoseController = TextEditingController();
+  String? _calculatedDose;
+  String? _warning;
 
   void _calculate() {
-    final weight = double.tryParse(_weightCtrl.text.trim());
-    final height = double.tryParse(_heightCtrl.text.trim());
+    final adultDose = double.tryParse(_adultDoseController.text);
+    if (adultDose == null || adultDose <= 0) {
+      setState(() {
+        _calculatedDose = null;
+        _warning = null;
+      });
+      return;
+    }
+
+    final result = PediatricDoseCalculator.calculateDose(
+      ageInYears: widget.patientAge,
+      adultDose: adultDose,
+    );
 
     setState(() {
-      _result = PediatricDoseCalculator.calculatePediatricDose(
-        adultDoseString: widget.adultDose,
-        childAgeYears: widget.patient.age,
-        childWeightKg: weight,
-        childHeightCm: height,
-      );
+      _calculatedDose = result.formattedDose;
+      _warning = result.warning;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Хүүхдийн тун тооцоолох'),
-      content: SingleChildScrollView(
-        child: SizedBox(
-          width: 400,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+    if (widget.patientAge >= 18) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8, bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.black),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              // Patient Info
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.patient.fullName,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+              Icon(Icons.calculate, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                'Хүүхдийн тун',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: TextField(
+                  controller: _adultDoseController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Том хүний тун',
+                    hintText: '500',
+                    suffixText: 'mg',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(height: 4),
-                    Text('Нас: ${widget.patient.age} жил'),
-                    Text('Насанд хүрэгчдэд зориулсан тун: ${widget.adultDose}'),
-                  ],
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    isDense: true,
+                  ),
+                  onChanged: (_) => _calculate(),
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Weight Input
-              TextField(
-                controller: _weightCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Жин (кг)',
-                  hintText: 'Жишээ: 25',
-                  border: OutlineInputBorder(),
-                  helperText: 'Тооцооллын нарийвчлал сайжирна',
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (_) => _calculate(),
-              ),
-              const SizedBox(height: 12),
-
-              // Height Input
-              TextField(
-                controller: _heightCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Өндөр (см) - сонголт',
-                  hintText: 'Жишээ: 125',
-                  border: OutlineInputBorder(),
-                  helperText: 'BSA аргыг ашиглахад шаардлагатай',
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (_) => _calculate(),
-              ),
-              const SizedBox(height: 16),
-
-              // Calculate Button
-              if (_result == null)
-                Center(
-                  child: ElevatedButton.icon(
-                    onPressed: _calculate,
-                    icon: const Icon(Icons.calculate),
-                    label: const Text('Тооцоолох'),
+              const SizedBox(width: 12),
+              Icon(Icons.arrow_forward, color: Colors.blue.shade400, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: _calculatedDose != null
+                          ? Colors.green.shade300
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Хүүхдийн тун',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _calculatedDose ?? '—',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: _calculatedDose != null
+                              ? Colors.green.shade900
+                              : Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-
-              // Results
-              if (_result != null) ...[
-                const Divider(),
-                _buildResults(_result!),
+              ),
+              if (_calculatedDose != null) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () {
+                    widget.onDoseCalculated(_calculatedDose!);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Тун хуулагдлаа'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  icon: Icon(Icons.check_circle, color: Colors.green.shade600),
+                  tooltip: 'Тун ашиглах',
+                  constraints: const BoxConstraints(),
+                  padding: EdgeInsets.zero,
+                ),
               ],
             ],
           ),
-        ),
+          if (_warning != null && _warning!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: Colors.orange.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 16,
+                    color: Colors.orange.shade700,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _warning!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.orange.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Хаах'),
-        ),
-        if (_result != null && _result!.calculatedDose > 0)
-          ElevatedButton(
-            onPressed: () {
-              widget.onDoseSelected?.call(_result!.formattedDose);
-              Navigator.of(context).pop();
-            },
-            child: const Text('Ашиглах'),
-          ),
-      ],
     );
   }
 
-  Widget _buildResults(DoseCalculationResult result) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Calculated Dose
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.green.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.green.shade200),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Тооцоолсон тун:',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                result.formattedDose,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green.shade900,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Арга: ${result.method}',
-                style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-
-        // Warning
-        if (result.warning.isNotEmpty) ...[
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.warning_amber, color: Colors.orange.shade700),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    result.warning,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.orange.shade900,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-
-        // Recommendation
-        if (result.recommendation.isNotEmpty) ...[
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, color: Colors.blue.shade700),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    result.recommendation,
-                    style: TextStyle(fontSize: 13, color: Colors.blue.shade900),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
+  @override
+  void dispose() {
+    _adultDoseController.dispose();
+    super.dispose();
   }
 }

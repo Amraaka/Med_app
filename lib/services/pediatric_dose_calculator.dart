@@ -1,35 +1,54 @@
 import 'dart:math' as math;
 
-class DoseCalculationResult {
-  final double calculatedDose;
-  final double calculatedDoseMin;
-  final double calculatedDoseMax;
-  final String method;
-  final String unit;
-  final String warning;
-  final String recommendation;
-  final bool requiresAdjustment;
+class PediatricDoseCalculator {
+  static double calculateByAge(int ageInYears, double adultDose) {
+    if (ageInYears >= 18) return adultDose;
+    if (ageInYears <= 0) return 0;
+    return (ageInYears / (ageInYears + 12)) * adultDose;
+  }
 
-  const DoseCalculationResult({
-    required this.calculatedDose,
-    required this.calculatedDoseMin,
-    required this.calculatedDoseMax,
-    required this.method,
-    required this.unit,
-    required this.warning,
-    required this.recommendation,
-    required this.requiresAdjustment,
-  });
-
-  String get formattedDose {
-    if (calculatedDoseMin == calculatedDoseMax) {
-      return '${calculatedDose.toStringAsFixed(1)} $unit';
+  static String formatDose(double dose) {
+    if (dose == dose.roundToDouble()) {
+      return dose.toInt().toString();
     }
-    return '${calculatedDoseMin.toStringAsFixed(1)}-${calculatedDoseMax.toStringAsFixed(1)} $unit';
+    return dose.toStringAsFixed(1);
+  }
+
+  static PediatricDoseResult calculateDose({
+    required int ageInYears,
+    required double adultDose,
+    String unit = 'mg',
+  }) {
+    final calculatedDose = calculateByAge(ageInYears, adultDose);
+
+    String warning = '';
+    if (ageInYears < 1) {
+      warning = '⚠️ Нярайд онцгой анхаарал хандуулна уу!';
+    } else if (ageInYears < 3) {
+      warning = '⚠️ Бага насны хүүхэд - эмчтэй зөвлөлдөнө үү';
+    }
+
+    return PediatricDoseResult(
+      pediatricDose: calculatedDose,
+      formattedDose: '${formatDose(calculatedDose)} $unit',
+      warning: warning,
+    );
   }
 }
 
-class PediatricDoseCalculator {
+class PediatricDoseResult {
+  final double pediatricDose;
+  final String formattedDose;
+  final String warning;
+
+  PediatricDoseResult({
+    required this.pediatricDose,
+    required this.formattedDose,
+    required this.warning,
+  });
+}
+
+class OldPediatricDoseCalculator {
   static const double standardAdultWeight = 70.0;
 
   static ({double? value, String unit}) parseDose(String doseString) {
@@ -245,5 +264,34 @@ class PediatricDoseCalculator {
       17: 65.0,
     };
     return weights[ageYears] ?? standardAdultWeight;
+  }
+}
+
+class DoseCalculationResult {
+  final double calculatedDose;
+  final double calculatedDoseMin;
+  final double calculatedDoseMax;
+  final String method;
+  final String unit;
+  final String warning;
+  final String recommendation;
+  final bool requiresAdjustment;
+
+  const DoseCalculationResult({
+    required this.calculatedDose,
+    required this.calculatedDoseMin,
+    required this.calculatedDoseMax,
+    required this.method,
+    required this.unit,
+    required this.warning,
+    required this.recommendation,
+    required this.requiresAdjustment,
+  });
+
+  String get formattedDose {
+    if (calculatedDoseMin == calculatedDoseMax) {
+      return '${calculatedDose.toStringAsFixed(1)} $unit';
+    }
+    return '${calculatedDoseMin.toStringAsFixed(1)}-${calculatedDoseMax.toStringAsFixed(1)} $unit';
   }
 }

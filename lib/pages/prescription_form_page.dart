@@ -5,6 +5,7 @@ import '../models.dart';
 import '../services.dart';
 import '../services/pdf_service.dart';
 import '../widgets.dart';
+import '../widgets/pediatric_dose_helper.dart';
 
 class PrescriptionFormPage extends StatefulWidget {
   const PrescriptionFormPage({super.key, required this.patient});
@@ -553,10 +554,25 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
               const SizedBox(height: 8),
               ...List.generate(
                 _drugs.length,
-                (i) => DrugInput(
-                  initial: _drugs[i],
-                  onChanged: (d) => _onDrugChanged(i, d),
-                  onRemove: () => setState(() => _drugs.removeAt(i)),
+                (i) => Column(
+                  children: [
+                    DrugInput(
+                      initial: _drugs[i],
+                      onChanged: (d) => _onDrugChanged(i, d),
+                      onRemove: () => setState(() => _drugs.removeAt(i)),
+                    ),
+                    if (p.age < 18)
+                      PediatricDoseHelper(
+                        patientAge: p.age,
+                        onDoseCalculated: (calculatedDose) {
+                          // Update the specific drug's dose
+                          final updatedDrug = _drugs[i].copyWith(
+                            dose: calculatedDose,
+                          );
+                          _onDrugChanged(i, updatedDrug);
+                        },
+                      ),
+                  ],
                 ),
               ),
               if (_drugs.isEmpty)

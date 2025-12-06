@@ -2,6 +2,7 @@ import 'dart:convert';
 
 class Drug {
   final String mongolianName;
+  final String latinName;
   final String dose;
   final String form;
   final int quantity;
@@ -10,6 +11,7 @@ class Drug {
 
   const Drug({
     required this.mongolianName,
+    this.latinName = '', // Add default value
     required this.dose,
     required this.form,
     required this.quantity,
@@ -19,6 +21,7 @@ class Drug {
 
   Drug copyWith({
     String? mongolianName,
+    String? latinName,
     String? dose,
     String? form,
     int? quantity,
@@ -27,6 +30,7 @@ class Drug {
   }) {
     return Drug(
       mongolianName: mongolianName ?? this.mongolianName,
+      latinName: latinName ?? this.latinName,
       dose: dose ?? this.dose,
       form: form ?? this.form,
       quantity: quantity ?? this.quantity,
@@ -37,6 +41,7 @@ class Drug {
 
   factory Drug.fromJson(Map<String, dynamic> json) => Drug(
     mongolianName: json['mongolianName'] as String? ?? '',
+    latinName: json['latinName'] as String? ?? '', // Add latinName
     dose: json['dose'] as String? ?? '',
     form: json['form'] as String? ?? '',
     quantity: (json['quantity'] as num?)?.toInt() ?? 0,
@@ -46,6 +51,7 @@ class Drug {
 
   Map<String, dynamic> toJson() => {
     'mongolianName': mongolianName,
+    'latinName': latinName, // Add latinName
     'dose': dose,
     'form': form,
     'quantity': quantity,

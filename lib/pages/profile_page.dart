@@ -75,7 +75,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(46),
+            padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Text(
@@ -111,6 +111,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             color: Colors.grey[600],
                           ),
                         ),
+                        SizedBox(height: 40),
                       ],
                     ),
                   )
@@ -168,6 +169,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     },
                   ),
           ),
+          SizedBox(height: 40),
         ],
       ),
       floatingActionButton: Padding(
