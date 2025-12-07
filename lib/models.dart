@@ -297,6 +297,7 @@ class Prescription {
 }
 
 class DoctorProfile {
+  final String? userId; // Firebase Auth user ID
   final String name;
   final String title;
   final String location;
@@ -308,6 +309,7 @@ class DoctorProfile {
   final String? signaturePath; // Path to doctor signature image
 
   const DoctorProfile({
+    this.userId,
     required this.name,
     required this.title,
     required this.location,
@@ -318,6 +320,7 @@ class DoctorProfile {
   });
 
   DoctorProfile copyWith({
+    String? userId,
     String? name,
     String? title,
     String? location,
@@ -326,6 +329,7 @@ class DoctorProfile {
     String? clinicName,
     String? signaturePath,
   }) => DoctorProfile(
+    userId: userId ?? this.userId,
     name: name ?? this.name,
     title: title ?? this.title,
     location: location ?? this.location,
@@ -336,6 +340,7 @@ class DoctorProfile {
   );
 
   Map<String, dynamic> toMap() => {
+    'userId': userId,
     'name': name,
     'title': title,
     'location': location,
@@ -353,6 +358,7 @@ class DoctorProfile {
     }
 
     return DoctorProfile(
+      userId: map['userId'] is String ? map['userId'] as String : null,
       name: _asString(map['name']),
       title: _asString(map['title']),
       location: _asString(map['location']),

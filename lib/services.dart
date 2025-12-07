@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'models.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class PatientService extends ChangeNotifier {
   List<Patient> _patients = [];
@@ -147,6 +149,9 @@ class PrescriptionService extends ChangeNotifier {
 
 class DoctorProfileService extends ChangeNotifier {
   static const _prefsKey = 'doctor_profile';
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   DoctorProfile _profile = const DoctorProfile(
     name: 'Др. Ариун',
     title: 'Дотрын эмч',
@@ -157,7 +162,23 @@ class DoctorProfileService extends ChangeNotifier {
 
   DoctorProfile get profile => _profile;
 
+  /// Load profile from Firestore. Falls back to SharedPreferences if not found.
   Future<void> loadProfile() async {
+    final userId = _auth.currentUser?.uid;
+    if (userId != null) {
+      try {
+        final doc = await _firestore.collection('doctors').doc(userId).get();
+        if (doc.exists) {
+          _profile = DoctorProfile.fromMap(doc.data()!);
+          notifyListeners();
+          return;
+        }
+      } catch (e) {
+        debugPrint('Error loading profile from Firestore: $e');
+      }
+    }
+
+    // Fallback to SharedPreferences for backward compatibility
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_prefsKey);
     try {
@@ -170,10 +191,62 @@ class DoctorProfileService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Create a new doctor profile in Firestore
+  Future<void> createProfile({
+    required String userId,
+    required String name,
+    required String title,
+    required String location,
+    String phone = '',
+    String clinicName = '',
+  }) async {
+    try {
+      final newProfile = DoctorProfile(
+        userId: userId,
+        name: name,
+        title: title,
+        location: location,
+        phone: phone,
+        clinicName: clinicName,
+      );
+
+      await _firestore
+          .collection('doctors')
+          .doc(userId)
+          .set(newProfile.toMap());
+      _profile = newProfile;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error creating profile in Firestore: $e');
+      rethrow;
+    }
+  }
+
+  /// Update existing profile in Firestore
   Future<void> updateProfile(DoctorProfile updated) async {
     _profile = updated;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefsKey, _profile.toJson());
+    final userId = _auth.currentUser?.uid ?? updated.userId;
+
+    if (userId != null) {
+      try {
+        await _firestore
+            .collection('doctors')
+            .doc(userId)
+            .set(
+              updated.copyWith(userId: userId).toMap(),
+              SetOptions(merge: true),
+            );
+      } catch (e) {
+        debugPrint('Error updating profile in Firestore: $e');
+        // Still save locally as fallback
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_prefsKey, updated.toJson());
+      }
+    } else {
+      // Fallback to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_prefsKey, _profile.toJson());
+    }
     notifyListeners();
   }
 

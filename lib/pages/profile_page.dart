@@ -20,6 +20,15 @@ class _ProfilePageState extends State<ProfilePage> {
   String _searchQuery = '';
 
   @override
+  void initState() {
+    super.initState();
+    // Reload profile from Firestore when page loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<DoctorProfileService>().loadProfile();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final patientService = context.watch<PatientService>();
