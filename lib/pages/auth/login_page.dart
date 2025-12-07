@@ -68,9 +68,14 @@ class _LoginPageState extends State<LoginPage> {
             child: Card(
               color: Theme.of(context).colorScheme.surface,
               elevation: 8,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -82,53 +87,84 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.14),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.14),
                                 shape: BoxShape.circle,
                               ),
                               padding: const EdgeInsets.all(12),
-                              child: Icon(Icons.local_hospital, size: 40, color: Theme.of(context).colorScheme.primary),
+                              child: Icon(
+                                Icons.local_hospital,
+                                size: 40,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
                             const SizedBox(height: 12),
-                            Text('Sign in', style: Theme.of(context).textTheme.titleMedium),
+                            Text(
+                              'Sign in',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                             const SizedBox(height: 18),
                           ],
                         ),
                       ),
                       TextFormField(
                         controller: _emailController,
-                        decoration: inputDecoration.copyWith(labelText: 'Email', prefixIcon: const Icon(Icons.email)),
+                        decoration: inputDecoration.copyWith(
+                          labelText: 'Email',
+                          prefixIcon: const Icon(Icons.email),
+                        ),
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           final v = value?.trim() ?? '';
                           if (v.isEmpty) return 'Email is required';
-                          final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-                          if (!emailRegex.hasMatch(v)) return 'Enter a valid email';
+                          final emailRegex = RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          );
+                          if (!emailRegex.hasMatch(v))
+                            return 'Enter a valid email';
                           return null;
                         },
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _passwordController,
-                        decoration: inputDecoration.copyWith(labelText: 'Password', prefixIcon: const Icon(Icons.lock)),
+                        decoration: inputDecoration.copyWith(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock),
+                        ),
                         obscureText: true,
                         validator: (value) {
-                          if ((value ?? '').isEmpty) return 'Password is required';
+                          if ((value ?? '').isEmpty)
+                            return 'Password is required';
                           return null;
                         },
                       ),
                       if (_error != null) ...[
                         const SizedBox(height: 12),
-                        Text(_error!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
+                        Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
                       ],
                       const SizedBox(height: 18),
                       ElevatedButton(
                         onPressed: _loading ? null : _login,
                         style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         child: _loading
-                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Text('Login'),
                       ),
                       TextButton(

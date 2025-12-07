@@ -96,9 +96,14 @@ class _SignupPageState extends State<SignupPage> {
             child: Card(
               color: Theme.of(context).colorScheme.surface,
               elevation: 8,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 20,
+                ),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -109,51 +114,75 @@ class _SignupPageState extends State<SignupPage> {
                           children: [
                             Container(
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.14),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.14),
                                 shape: BoxShape.circle,
                               ),
                               padding: const EdgeInsets.all(12),
-                              child: Icon(Icons.person_add, size: 40, color: Theme.of(context).colorScheme.primary),
+                              child: Icon(
+                                Icons.person_add,
+                                size: 40,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
                             const SizedBox(height: 12),
-                            Text('Create Doctor Account', style: Theme.of(context).textTheme.titleMedium),
+                            Text(
+                              'Create Doctor Account',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
                             const SizedBox(height: 18),
                           ],
                         ),
                       ),
                       TextFormField(
                         controller: _emailController,
-                        decoration: inputDecoration.copyWith(labelText: 'Email', prefixIcon: const Icon(Icons.email)),
+                        decoration: inputDecoration.copyWith(
+                          labelText: 'Email',
+                          prefixIcon: const Icon(Icons.email),
+                        ),
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           final v = value?.trim() ?? '';
                           if (v.isEmpty) return 'Email is required';
-                          final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-                          if (!emailRegex.hasMatch(v)) return 'Enter a valid email';
+                          final emailRegex = RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          );
+                          if (!emailRegex.hasMatch(v))
+                            return 'Enter a valid email';
                           return null;
                         },
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _passwordController,
-                        decoration: inputDecoration.copyWith(labelText: 'Password', prefixIcon: const Icon(Icons.lock)),
+                        decoration: inputDecoration.copyWith(
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock),
+                        ),
                         obscureText: true,
                         validator: (value) {
                           final v = value ?? '';
                           if (v.isEmpty) return 'Password is required';
-                          if (v.length < 6) return 'Minimum 6 characters required';
+                          if (v.length < 6)
+                            return 'Minimum 6 characters required';
                           return null;
                         },
                       ),
                       const SizedBox(height: 18),
                       Text(
                         'Doctor Information',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _nameController,
-                        decoration: inputDecoration.copyWith(labelText: 'Full Name (e.g., Др. Ариун)', prefixIcon: const Icon(Icons.person)),
+                        decoration: inputDecoration.copyWith(
+                          labelText: 'Full Name (e.g., Др. Ариун)',
+                          prefixIcon: const Icon(Icons.person),
+                        ),
                         validator: (value) {
                           final v = value?.trim() ?? '';
                           if (v.isEmpty) return 'Name is required';
@@ -163,7 +192,10 @@ class _SignupPageState extends State<SignupPage> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _titleController,
-                        decoration: inputDecoration.copyWith(labelText: 'Title/Specialty (e.g., Дотрын эмч)', prefixIcon: const Icon(Icons.work)),
+                        decoration: inputDecoration.copyWith(
+                          labelText: 'Title/Specialty (e.g., Дотрын эмч)',
+                          prefixIcon: const Icon(Icons.work),
+                        ),
                         validator: (value) {
                           final v = value?.trim() ?? '';
                           if (v.isEmpty) return 'Title is required';
@@ -173,7 +205,10 @@ class _SignupPageState extends State<SignupPage> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _locationController,
-                        decoration: inputDecoration.copyWith(labelText: 'Location (e.g., Улаанбаатар, Монгол)', prefixIcon: const Icon(Icons.location_on)),
+                        decoration: inputDecoration.copyWith(
+                          labelText: 'Location (e.g., Улаанбаатар, Монгол)',
+                          prefixIcon: const Icon(Icons.location_on),
+                        ),
                         validator: (value) {
                           final v = value?.trim() ?? '';
                           if (v.isEmpty) return 'Location is required';
@@ -183,13 +218,19 @@ class _SignupPageState extends State<SignupPage> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _phoneController,
-                        decoration: inputDecoration.copyWith(labelText: 'Phone Number (optional)', prefixIcon: const Icon(Icons.phone)),
+                        decoration: inputDecoration.copyWith(
+                          labelText: 'Phone Number (optional)',
+                          prefixIcon: const Icon(Icons.phone),
+                        ),
                         keyboardType: TextInputType.phone,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _clinicNameController,
-                        decoration: inputDecoration.copyWith(labelText: 'Clinic/Hospital Name (optional)', prefixIcon: const Icon(Icons.local_hospital)),
+                        decoration: inputDecoration.copyWith(
+                          labelText: 'Clinic/Hospital Name (optional)',
+                          prefixIcon: const Icon(Icons.local_hospital),
+                        ),
                       ),
                       if (_error != null) ...[
                         const SizedBox(height: 12),
@@ -211,10 +252,18 @@ class _SignupPageState extends State<SignupPage> {
                         onPressed: _loading ? null : _signup,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                         child: _loading
-                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
                             : const Text('Create Account'),
                       ),
                       const SizedBox(height: 12),
