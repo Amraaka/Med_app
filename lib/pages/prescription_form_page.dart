@@ -560,18 +560,19 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
                       initial: _drugs[i],
                       onChanged: (d) => _onDrugChanged(i, d),
                       onRemove: () => setState(() => _drugs.removeAt(i)),
+                      patientAge: p.age,
                     ),
-                    if (p.age < 18)
-                      PediatricDoseHelper(
-                        patientAge: p.age,
-                        onDoseCalculated: (calculatedDose) {
-                          // Update the specific drug's dose
-                          final updatedDrug = _drugs[i].copyWith(
-                            dose: calculatedDose,
-                          );
-                          _onDrugChanged(i, updatedDrug);
-                        },
-                      ),
+                    // if (p.age < 18)
+                    //   PediatricDoseHelper(
+                    //     patientAge: p.age,
+                    //     onDoseCalculated: (calculatedDose) {
+                    //       // Update the specific drug's dose
+                    //       final updatedDrug = _drugs[i].copyWith(
+                    //         dose: calculatedDose,
+                    //       );
+                    //       _onDrugChanged(i, updatedDrug);
+                    //     },
+                    //   ),
                   ],
                 ),
               ),

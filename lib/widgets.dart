@@ -3,6 +3,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'dart:convert' show json;
 import 'dart:async';
 import 'models.dart';
+import 'package:pediatric_dose_calculator/pediatric_dose_calculator.dart';
 
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
@@ -117,11 +118,13 @@ class DrugInput extends StatefulWidget {
     this.initial,
     required this.onChanged,
     required this.onRemove,
+    this.patientAge,
   });
 
   final Drug? initial;
   final ValueChanged<Drug> onChanged;
   final VoidCallback onRemove;
+  final int? patientAge;
 
   @override
   State<DrugInput> createState() => _DrugInputState();
@@ -273,6 +276,26 @@ class _DrugInputState extends State<DrugInput> {
     _debounceTimer = Timer(const Duration(milliseconds: 300), _emit);
   }
 
+  String _calculatePediatricDose(String adultDoseString, int ageInYears) {
+    final parsedDose = AdvancedPediatricDoseCalculator.parseDose(
+      adultDoseString,
+    );
+    if (parsedDose.value == null || parsedDose.value! <= 0) {
+      return adultDoseString;
+    }
+
+    final adultDose = parsedDose.value!;
+    final unit = parsedDose.unit.isEmpty ? 'mg' : parsedDose.unit;
+
+    final result = PediatricDoseCalculator.calculateDose(
+      ageInYears: ageInYears,
+      adultDose: adultDose,
+      unit: unit,
+    );
+
+    return result.formattedDose;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -324,9 +347,19 @@ class _DrugInputState extends State<DrugInput> {
                       return results;
                     },
                     onSelected: (Drug selected) {
-                      // Batch updates to avoid multiple rebuilds
                       _mnCtrl.text = selected.mongolianName;
-                      _doseCtrl.text = selected.dose;
+
+                      String calculatedDose = selected.dose;
+                      if (widget.patientAge != null &&
+                          widget.patientAge! < 18 &&
+                          selected.dose.isNotEmpty) {
+                        calculatedDose = _calculatePediatricDose(
+                          selected.dose,
+                          widget.patientAge!,
+                        );
+                      }
+                      _doseCtrl.text = calculatedDose;
+
                       _formCtrl.text = selected.form;
                       if (selected.quantity > 0) {
                         _qtyCtrl.text = selected.quantity.toString();
@@ -433,10 +466,23 @@ class _DrugInputState extends State<DrugInput> {
                     children: [
                       TextFormField(
                         controller: _doseCtrl,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Тун ',
                           hintText: 'Жишээ, 500mg',
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
+                          suffixIcon:
+                              widget.patientAge != null &&
+                                  widget.patientAge! < 18
+                              ? Tooltip(
+                                  message:
+                                      'Хүүхдийн тун автоматаар тооцоологдоно',
+                                  child: Icon(
+                                    Icons.child_care,
+                                    color: Colors.blue.shade400,
+                                    size: 20,
+                                  ),
+                                )
+                              : null,
                         ),
                         style: _inputTextStyle,
                         onChanged: (_) => _debouncedEmit(),

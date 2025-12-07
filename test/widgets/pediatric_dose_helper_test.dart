@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:med_app/services/pediatric_dose_calculator.dart';
+import 'package:pediatric_dose_calculator/pediatric_dose_calculator.dart';
 
 void main() {
   group('Pediatric Dose Calculation Tests', () {

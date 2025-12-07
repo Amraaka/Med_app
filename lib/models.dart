@@ -11,7 +11,7 @@ class Drug {
 
   const Drug({
     required this.mongolianName,
-    this.latinName = '', // Add default value
+    this.latinName = '',
     required this.dose,
     required this.form,
     required this.quantity,
@@ -51,7 +51,7 @@ class Drug {
 
   Map<String, dynamic> toJson() => {
     'mongolianName': mongolianName,
-    'latinName': latinName, // Add latinName
+    'latinName': latinName,
     'dose': dose,
     'form': form,
     'quantity': quantity,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/pediatric_dose_calculator.dart';
+import 'package:pediatric_dose_calculator/pediatric_dose_calculator.dart';
 
 class PediatricDoseHelper extends StatefulWidget {
   final int patientAge;
@@ -57,16 +57,16 @@ class _PediatricDoseHelperState extends State<PediatricDoseHelper> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.calculate, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                'Хүүхдийн тун',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-              ),
-            ],
-          ),
+          // Row(
+          //   children: [
+          //     Icon(Icons.calculate, size: 18),
+          //     const SizedBox(width: 6),
+          //     Text(
+          //       'Хүүхдийн тун',
+          //       style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          //     ),
+          //   ],
+          // ),
           const SizedBox(height: 10),
           Row(
             children: [
