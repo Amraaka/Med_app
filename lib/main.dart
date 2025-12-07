@@ -4,8 +4,16 @@ import 'pages/home_page.dart';
 import 'pages/profile_page.dart';
 import 'services.dart';
 import 'widgets.dart';
+import 'pages/auth/login_page.dart';
+import 'pages/auth/singup_page.dart';
+import 'services/auth_service.dart';
 
-void main() {
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -28,7 +36,12 @@ class MyApp extends StatelessWidget {
         title: 'Med App',
         debugShowCheckedModeBanner: false,
         theme: _buildAppTheme(),
-        home: const MainScreen(),
+        home: const AuthGate(),
+        routes: {
+          '/login': (context) => LoginPage(),
+          '/signup': (context) => SignupPage(),
+          '/home': (context) => const MainScreen(),
+        },
       ),
     );
   }
@@ -91,4 +104,26 @@ ThemeData _buildAppTheme() {
       elevation: 0,
     ),
   );
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+      stream: authService.value.authStateChanges,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasData) {
+          return const MainScreen();
+        }
+        return LoginPage();
+      },
+    );
+  }
 }

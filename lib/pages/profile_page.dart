@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../models.dart';
 import '../services.dart';
+import '../services/auth_service.dart';
 import 'patient_form_page.dart';
 import 'patient_detail_page.dart';
 import 'drugs_management_page.dart';
@@ -39,6 +40,45 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
         title: const Text('Профайл'),
         elevation: 0,
+        actions: [
+          IconButton(
+            tooltip: 'Гарах',
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Гарах уу?'),
+                  content: const Text(
+                    'Та системээс гарахдаа итгэлтэй байна уу?',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Болих'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Гарах'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmed == true) {
+                await authService.value.signOut();
+                if (!context.mounted) return;
+                // Ensure we return to the Login page and clear stack
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil('/login', (route) => false);
+                // Optional: feedback (may not show if route changes immediately)
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   const SnackBar(content: Text('Та системээс гарлаа')),
+                // );
+              }
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
