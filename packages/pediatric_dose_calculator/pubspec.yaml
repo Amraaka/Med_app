@@ -1,6 +1,9 @@
 name: pediatric_dose_calculator
 description: A Flutter package for calculating pediatric medication doses using various medical formulas
 version: 1.0.0
+repository: https://github.com/Amraaka/Med_app
+homepage: https://github.com/Amraaka/Med_app
+license: MIT
 # publish_to: none
 
 environment:
