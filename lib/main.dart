@@ -6,6 +6,7 @@ import 'services.dart';
 import 'widgets.dart';
 import 'pages/auth/login_page.dart';
 import 'pages/auth/singup_page.dart';
+import 'pages/auth/intro_page.dart';
 import 'services/auth_service.dart';
 
 import 'package:firebase_core/firebase_core.dart';
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
         theme: _buildAppTheme(),
         home: const AuthGate(),
         routes: {
+          '/intro': (context) => const IntroPage(),
           '/login': (context) => LoginPage(),
           '/signup': (context) => SignupPage(),
           '/home': (context) => const MainScreen(),
@@ -122,7 +124,7 @@ class AuthGate extends StatelessWidget {
         if (snapshot.hasData) {
           return const MainScreen();
         }
-        return LoginPage();
+        return const IntroPage();
       },
     );
   }
