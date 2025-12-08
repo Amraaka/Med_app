@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../services.dart';
 import '../../widgets/animated_press_button.dart';
+import '../../widgets/animated_logo_hero.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -113,21 +114,12 @@ class _SignupPageState extends State<SignupPage> {
                       Center(
                         child: Column(
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withOpacity(0.14),
-                                shape: BoxShape.circle,
-                              ),
-                              padding: const EdgeInsets.all(12),
-                              child: Icon(
-                                Icons.person_add,
-                                size: 40,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
+                            const AnimatedLogoHero(
+                              size: 100,
+                              subtitle: 'Create Account',
+                              showFloatingAnimation: true,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 20),
                             Text(
                               'Create Doctor Account',
                               style: Theme.of(context).textTheme.titleMedium,

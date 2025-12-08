@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/animated_press_button.dart';
+import '../../widgets/animated_logo_hero.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -83,29 +84,15 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Center(
+                      const Center(
                         child: Column(
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withOpacity(0.14),
-                                shape: BoxShape.circle,
-                              ),
-                              padding: const EdgeInsets.all(12),
-                              child: Icon(
-                                Icons.local_hospital,
-                                size: 40,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
+                            AnimatedLogoHero(
+                              size: 100,
+                              subtitle: 'Welcome Back',
+                              showFloatingAnimation: true,
                             ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Sign in',
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 18),
+                            SizedBox(height: 24),
                           ],
                         ),
                       ),
