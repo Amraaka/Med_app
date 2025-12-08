@@ -500,8 +500,10 @@ packages:
     dependency: "direct main"
     description:
       path: "packages/pediatric_dose_calculator"
-      relative: true
-    source: path
+      ref: main
+      resolved-ref: afe0395063dedd3646f411bbcb99f2a014db255e
+      url: "https://github.com/Amraaka/Med_app.git"
+    source: git
     version: "1.0.0"
   petitparser:
     dependency: transitive
