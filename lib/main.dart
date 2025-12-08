@@ -77,7 +77,25 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 240),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.02, 0.0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        ),
+        child: KeyedSubtree(
+          key: ValueKey<int>(_selectedIndex),
+          child: _pages[_selectedIndex],
+        ),
+      ),
       extendBody: true,
       bottomNavigationBar: AppBottomNav(
         selectedIndex: _selectedIndex,
@@ -105,6 +123,16 @@ ThemeData _buildAppTheme() {
       backgroundColor: Colors.transparent,
       elevation: 0,
     ),
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: <TargetPlatform, PageTransitionsBuilder>{
+        TargetPlatform.android: _SlideFadeTransitionsBuilder(),
+        TargetPlatform.iOS: _SlideFadeTransitionsBuilder(),
+        TargetPlatform.macOS: _SlideFadeTransitionsBuilder(),
+        TargetPlatform.linux: _SlideFadeTransitionsBuilder(),
+        TargetPlatform.windows: _SlideFadeTransitionsBuilder(),
+        TargetPlatform.fuchsia: _SlideFadeTransitionsBuilder(),
+      },
+    ),
   );
 }
 
@@ -126,6 +154,35 @@ class AuthGate extends StatelessWidget {
         }
         return const IntroPage();
       },
+    );
+  }
+}
+
+class _SlideFadeTransitionsBuilder extends PageTransitionsBuilder {
+  const _SlideFadeTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.06, 0.0),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      ),
     );
   }
 }

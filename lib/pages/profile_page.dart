@@ -80,10 +80,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 Navigator.of(
                   context,
                 ).pushNamedAndRemoveUntil('/login', (route) => false);
-                // Optional: feedback (may not show if route changes immediately)
-                // ScaffoldMessenger.of(context).showSnackBar(
-                //   const SnackBar(content: Text('Та системээс гарлаа')),
-                // );
               }
             },
           ),

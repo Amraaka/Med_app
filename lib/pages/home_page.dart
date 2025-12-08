@@ -5,6 +5,7 @@ import '../services/pdf_service.dart';
 import '../models.dart';
 import 'select_patient_page.dart';
 import 'prescription_form_page.dart';
+import '../widgets/animated_press_button.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -193,7 +194,7 @@ class _HomePageState extends State<HomePage> {
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 110.0),
-        child: FloatingActionButton.extended(
+        child: AnimatedPressButton(
           onPressed: () async {
             final selected = await Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SelectPatientPage()),
@@ -207,8 +208,23 @@ class _HomePageState extends State<HomePage> {
               );
             }
           },
-          icon: const Icon(Icons.add),
-          label: const Text('Шинэ жор'),
+          child: FloatingActionButton.extended(
+            onPressed: () async {
+              final selected = await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SelectPatientPage()),
+              );
+              if (!context.mounted) return;
+              if (selected is Patient) {
+                await Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PrescriptionFormPage(patient: selected),
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Шинэ жор'),
+          ),
         ),
       ),
     );

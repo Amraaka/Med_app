@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../../widgets/animated_press_button.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -149,31 +150,41 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                       const SizedBox(height: 18),
-                      ElevatedButton(
+                      AnimatedPressButton(
                         onPressed: _loading ? null : _login,
-                        style: ElevatedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                        child: ElevatedButton(
+                          onPressed: _loading ? null : _login,
+                          style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          child: _loading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Login'),
                         ),
-                        child: _loading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Login'),
                       ),
-                      TextButton(
+                      AnimatedPressButton(
                         onPressed: _loading
                             ? null
                             : () {
                                 Navigator.pushNamed(context, '/signup');
                               },
-                        child: const Text("Don't have an account? Sign up"),
+                        child: TextButton(
+                          onPressed: _loading
+                              ? null
+                              : () {
+                                  Navigator.pushNamed(context, '/signup');
+                                },
+                          child: const Text("Don't have an account? Sign up"),
+                        ),
                       ),
                     ],
                   ),

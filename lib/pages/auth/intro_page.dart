@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import '../../widgets/animated_press_button.dart';
 
 class IntroPage extends StatefulWidget {
   const IntroPage({super.key});
@@ -90,12 +91,17 @@ class _IntroPageState extends State<IntroPage> {
             child: AnimatedOpacity(
               opacity: _currentPage == _pages.length - 1 ? 0.0 : 1.0,
               duration: const Duration(milliseconds: 200),
-              child: TextButton(
+              child: AnimatedPressButton(
                 onPressed: _goToLogin,
-                style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
-                child: const Text(
-                  'Алгасах',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                child: TextButton(
+                  onPressed: _goToLogin,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey[600],
+                  ),
+                  child: const Text(
+                    'Алгасах',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ),
@@ -133,21 +139,24 @@ class _IntroPageState extends State<IntroPage> {
                 SizedBox(
                   width: double.infinity,
                   height: 56,
-                  child: ElevatedButton(
+                  child: AnimatedPressButton(
                     onPressed: _nextPage,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _pages[_currentPage]['color'],
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                    child: ElevatedButton(
+                      onPressed: _nextPage,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _pages[_currentPage]['color'],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 2,
                       ),
-                      elevation: 2,
-                    ),
-                    child: Text(
-                      _currentPage == _pages.length - 1 ? 'Эхлэх' : 'Дараах',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                      child: Text(
+                        _currentPage == _pages.length - 1 ? 'Эхлэх' : 'Дараах',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../services.dart';
+import '../../widgets/animated_press_button.dart';
 
 class SignupPage extends StatefulWidget {
   @override
@@ -248,32 +249,42 @@ class _SignupPageState extends State<SignupPage> {
                         ),
                       ],
                       const SizedBox(height: 18),
-                      ElevatedButton(
+                      AnimatedPressButton(
                         onPressed: _loading ? null : _signup,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                        child: ElevatedButton(
+                          onPressed: _loading ? null : _signup,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
+                          child: _loading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text('Create Account'),
                         ),
-                        child: _loading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Create Account'),
                       ),
                       const SizedBox(height: 12),
-                      TextButton(
+                      AnimatedPressButton(
                         onPressed: _loading
                             ? null
                             : () {
                                 Navigator.pop(context);
                               },
-                        child: const Text('Already have an account? Login'),
+                        child: TextButton(
+                          onPressed: _loading
+                              ? null
+                              : () {
+                                  Navigator.pop(context);
+                                },
+                          child: const Text('Already have an account? Login'),
+                        ),
                       ),
                     ],
                   ),
