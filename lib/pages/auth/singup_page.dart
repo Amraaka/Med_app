@@ -78,14 +78,8 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
-    final inputDecoration = InputDecoration(
-      filled: true,
-      fillColor: Colors.grey.shade200,
-      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide.none,
-      ),
+    const inputDecoration = InputDecoration(
+      contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 14),
     );
 
     return Scaffold(
@@ -96,15 +90,13 @@ class _SignupPageState extends State<SignupPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640),
             child: Card(
-              color: Theme.of(context).colorScheme.surface,
-              elevation: 8,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              color: Theme.of(context).cardTheme.color,
+              elevation: Theme.of(context).cardTheme.elevation,
+              shape: Theme.of(context).cardTheme.shape,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 20,
+                  horizontal: 24,
+                  vertical: 24,
                 ),
                 child: Form(
                   key: _formKey,
@@ -116,12 +108,11 @@ class _SignupPageState extends State<SignupPage> {
                           children: [
                             const AnimatedLogoHero(
                               size: 100,
-                              subtitle: 'Create Account',
                               showFloatingAnimation: true,
                             ),
                             const SizedBox(height: 20),
                             Text(
-                              'Create Doctor Account',
+                              'Эмчийн бүртгэл үүсгэх',
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 18),
@@ -131,18 +122,18 @@ class _SignupPageState extends State<SignupPage> {
                       TextFormField(
                         controller: _emailController,
                         decoration: inputDecoration.copyWith(
-                          labelText: 'Email',
+                          labelText: 'Имэйл',
                           prefixIcon: const Icon(Icons.email),
                         ),
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           final v = value?.trim() ?? '';
-                          if (v.isEmpty) return 'Email is required';
+                          if (v.isEmpty) return 'Имэйл заавал бөглөх';
                           final emailRegex = RegExp(
                             r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
                           );
                           if (!emailRegex.hasMatch(v))
-                            return 'Enter a valid email';
+                            return 'Зөв Имэйл оруулна уу';
                           return null;
                         },
                       ),
@@ -150,21 +141,21 @@ class _SignupPageState extends State<SignupPage> {
                       TextFormField(
                         controller: _passwordController,
                         decoration: inputDecoration.copyWith(
-                          labelText: 'Password',
+                          labelText: 'Нууц үг',
                           prefixIcon: const Icon(Icons.lock),
                         ),
                         obscureText: true,
                         validator: (value) {
                           final v = value ?? '';
-                          if (v.isEmpty) return 'Password is required';
+                          if (v.isEmpty) return 'Нууц үг заавал шаардлагатай';
                           if (v.length < 6)
-                            return 'Minimum 6 characters required';
+                            return '6-с дээш оронтой нууц үг оруулна уу';
                           return null;
                         },
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        'Doctor Information',
+                        'Эмчийн мэдээлэл',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -173,12 +164,12 @@ class _SignupPageState extends State<SignupPage> {
                       TextFormField(
                         controller: _nameController,
                         decoration: inputDecoration.copyWith(
-                          labelText: 'Full Name (e.g., Др. Ариун)',
+                          labelText: 'Бүтэн нэр',
                           prefixIcon: const Icon(Icons.person),
                         ),
                         validator: (value) {
                           final v = value?.trim() ?? '';
-                          if (v.isEmpty) return 'Name is required';
+                          if (v.isEmpty) return 'Нэр оруулна уу?';
                           return null;
                         },
                       ),
@@ -186,7 +177,7 @@ class _SignupPageState extends State<SignupPage> {
                       TextFormField(
                         controller: _titleController,
                         decoration: inputDecoration.copyWith(
-                          labelText: 'Title/Specialty (e.g., Дотрын эмч)',
+                          labelText: 'Эмчийн албан тушаал',
                           prefixIcon: const Icon(Icons.work),
                         ),
                         validator: (value) {
@@ -199,7 +190,7 @@ class _SignupPageState extends State<SignupPage> {
                       TextFormField(
                         controller: _locationController,
                         decoration: inputDecoration.copyWith(
-                          labelText: 'Location (e.g., Улаанбаатар, Монгол)',
+                          labelText: 'Байршил',
                           prefixIcon: const Icon(Icons.location_on),
                         ),
                         validator: (value) {
@@ -212,7 +203,7 @@ class _SignupPageState extends State<SignupPage> {
                       TextFormField(
                         controller: _phoneController,
                         decoration: inputDecoration.copyWith(
-                          labelText: 'Phone Number (optional)',
+                          labelText: 'Утасны дугаар',
                           prefixIcon: const Icon(Icons.phone),
                         ),
                         keyboardType: TextInputType.phone,
@@ -221,7 +212,7 @@ class _SignupPageState extends State<SignupPage> {
                       TextFormField(
                         controller: _clinicNameController,
                         decoration: inputDecoration.copyWith(
-                          labelText: 'Clinic/Hospital Name (optional)',
+                          labelText: 'Эмнэлгийн нэр',
                           prefixIcon: const Icon(Icons.local_hospital),
                         ),
                       ),
@@ -230,13 +221,21 @@ class _SignupPageState extends State<SignupPage> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.red.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.red.shade200),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.error.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.error.withOpacity(0.3),
+                            ),
                           ),
                           child: Text(
                             _error!,
-                            style: TextStyle(color: Colors.red.shade900),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
                           ),
                         ),
                       ],
@@ -245,12 +244,7 @@ class _SignupPageState extends State<SignupPage> {
                         onPressed: _loading ? null : _signup,
                         child: ElevatedButton(
                           onPressed: _loading ? null : _signup,
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
+                          style: Theme.of(context).elevatedButtonTheme.style,
                           child: _loading
                               ? const SizedBox(
                                   height: 20,
@@ -259,7 +253,7 @@ class _SignupPageState extends State<SignupPage> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text('Create Account'),
+                              : const Text('Бүртгүүлэх'),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -275,7 +269,7 @@ class _SignupPageState extends State<SignupPage> {
                               : () {
                                   Navigator.pop(context);
                                 },
-                          child: const Text('Already have an account? Login'),
+                          child: const Text('Нэвтрэх'),
                         ),
                       ),
                     ],

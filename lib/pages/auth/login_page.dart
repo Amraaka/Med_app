@@ -50,14 +50,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final inputDecoration = InputDecoration(
-      filled: true,
-      fillColor: Colors.grey.shade200,
-      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide.none,
-      ),
+    const inputDecoration = InputDecoration(
+      contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 14),
     );
 
     return Scaffold(
@@ -66,16 +60,15 @@ class _LoginPageState extends State<LoginPage> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
+            constraints: const BoxConstraints(maxWidth: 480),
             child: Card(
-              color: Theme.of(context).colorScheme.surface,
-              elevation: 8,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              // Use cardTheme from ThemeData
+              color: Theme.of(context).cardTheme.color,
+              elevation: Theme.of(context).cardTheme.elevation,
+              shape: Theme.of(context).cardTheme.shape,
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
+                  horizontal: 24,
                   vertical: 24,
                 ),
                 child: Form(
@@ -89,17 +82,33 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             AnimatedLogoHero(
                               size: 100,
-                              subtitle: 'Welcome Back',
                               showFloatingAnimation: true,
                             ),
                             SizedBox(height: 24),
+                            Text(
+                              "MediScript",
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 2.0,
+                                color: Colors.blueGrey,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black26,
+                                    offset: Offset(0, 2),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
+                      const SizedBox(height: 16),
                       TextFormField(
                         controller: _emailController,
                         decoration: inputDecoration.copyWith(
-                          labelText: 'Email',
+                          labelText: 'И-мэйл',
                           prefixIcon: const Icon(Icons.email),
                         ),
                         keyboardType: TextInputType.emailAddress,
@@ -118,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
                       TextFormField(
                         controller: _passwordController,
                         decoration: inputDecoration.copyWith(
-                          labelText: 'Password',
+                          labelText: 'Нууц үг',
                           prefixIcon: const Icon(Icons.lock),
                         ),
                         obscureText: true,
@@ -132,7 +141,9 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 12),
                         Text(
                           _error!,
-                          style: const TextStyle(color: Colors.red),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -141,12 +152,8 @@ class _LoginPageState extends State<LoginPage> {
                         onPressed: _loading ? null : _login,
                         child: ElevatedButton(
                           onPressed: _loading ? null : _login,
-                          style: ElevatedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
+                          // Use themed ElevatedButton styles
+                          style: Theme.of(context).elevatedButtonTheme.style,
                           child: _loading
                               ? const SizedBox(
                                   height: 20,
@@ -155,7 +162,7 @@ class _LoginPageState extends State<LoginPage> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text('Login'),
+                              : const Text('Нэвтрэх'),
                         ),
                       ),
                       AnimatedPressButton(
@@ -170,7 +177,7 @@ class _LoginPageState extends State<LoginPage> {
                               : () {
                                   Navigator.pushNamed(context, '/signup');
                                 },
-                          child: const Text("Don't have an account? Sign up"),
+                          child: const Text("Бүртгүүлэх"),
                         ),
                       ),
                     ],

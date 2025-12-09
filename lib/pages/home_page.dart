@@ -56,7 +56,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
+        backgroundColor: theme.colorScheme.primary.withOpacity(0.08),
         title: const Text('Бүртгэлтэй жорууд'),
         elevation: 0,
         bottom: PreferredSize(
@@ -69,9 +69,9 @@ class _HomePageState extends State<HomePage> {
                 hintText: 'Өвчтөн, онош, эм хайх...',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: theme.colorScheme.surface,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -193,7 +193,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 110.0),
+        padding: const EdgeInsets.only(bottom: 120.0),
         child: AnimatedPressButton(
           onPressed: () async {
             final selected = await Navigator.of(context).push(

@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// An animated logo hero widget with fade-in, scale, and floating animation effects.
-/// Perfect for auth pages and splash screens.
 class AnimatedLogoHero extends StatefulWidget {
   final double size;
-  final String? subtitle;
   final bool showFloatingAnimation;
 
   const AnimatedLogoHero({
     super.key,
-    this.size = 120,
-    this.subtitle,
+    this.size = 140,
     this.showFloatingAnimation = true,
   });
 
@@ -57,7 +53,6 @@ class _AnimatedLogoHeroState extends State<AnimatedLogoHero>
 
     _controller.forward();
 
-    // Optional: Loop the floating animation
     if (widget.showFloatingAnimation) {
       _controller.addStatusListener((status) {
         if (status == AnimationStatus.completed) {
@@ -97,7 +92,6 @@ class _AnimatedLogoHeroState extends State<AnimatedLogoHero>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Logo with subtle shadow
                   Container(
                     width: widget.size,
                     height: widget.size,
@@ -115,7 +109,7 @@ class _AnimatedLogoHeroState extends State<AnimatedLogoHero>
                     ),
                     child: ClipOval(
                       child: Image.asset(
-                        '../../assets/images/logo.png',
+                        'assets/images/logo1.png',
                         width: widget.size,
                         height: widget.size,
                         fit: BoxFit.cover,
@@ -138,17 +132,6 @@ class _AnimatedLogoHeroState extends State<AnimatedLogoHero>
                       ),
                     ),
                   ),
-                  if (widget.subtitle != null) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      widget.subtitle!,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
                 ],
               ),
             ),

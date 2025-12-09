@@ -74,7 +74,6 @@ class _PatientFormPageState extends State<PatientFormPage> {
                       controller: _familyCtrl,
                       decoration: const InputDecoration(
                         labelText: 'Овог (Family Name)',
-                        border: OutlineInputBorder(),
                       ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Овог заавал';
@@ -88,7 +87,6 @@ class _PatientFormPageState extends State<PatientFormPage> {
                       controller: _givenCtrl,
                       decoration: const InputDecoration(
                         labelText: 'Нэр (Given Name)',
-                        border: OutlineInputBorder(),
                       ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Нэр заавал';
@@ -116,7 +114,6 @@ class _PatientFormPageState extends State<PatientFormPage> {
                       child: InputDecorator(
                         decoration: const InputDecoration(
                           labelText: 'Төрсөн огноо (Birth Date)',
-                          border: OutlineInputBorder(),
                         ),
                         child: Text(
                           _birthDate == null
@@ -132,7 +129,6 @@ class _PatientFormPageState extends State<PatientFormPage> {
                       initialValue: _sex,
                       decoration: const InputDecoration(
                         labelText: 'Хүйс (Sex)',
-                        border: OutlineInputBorder(),
                       ),
                       items: const [
                         DropdownMenuItem(value: Sex.male, child: Text('Эр')),
@@ -147,15 +143,21 @@ class _PatientFormPageState extends State<PatientFormPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.2),
+                  ),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.info_outline,
-                      color: Colors.blue.shade700,
+                      color: Theme.of(context).colorScheme.primary,
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -164,7 +166,7 @@ class _PatientFormPageState extends State<PatientFormPage> {
                         'Бусад мэдээлэл (РД, утас, хаяг, онош) жор бичихэд асуугдана',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.blue.shade700,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ),
                     ),

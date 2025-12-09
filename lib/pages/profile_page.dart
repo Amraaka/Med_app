@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 import '../models.dart';
 import '../services.dart';
 import '../services/auth_service.dart';
 import 'patient_form_page.dart';
 import 'patient_detail_page.dart';
 import 'drugs_management_page.dart';
+import 'doctor_detail_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -22,7 +22,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Reload profile from Firestore when page loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<DoctorProfileService>().loadProfile();
     });
@@ -46,20 +45,45 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-        title: const Text('Профайл'),
+        backgroundColor: theme.colorScheme.primary,
+        title: const Text(
+          'Профайл',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
+            tooltip: 'Эмийн жагсаалт',
+            icon: const Icon(Icons.medication, color: Colors.white),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DrugsManagementPage()),
+              );
+            },
+          ),
+          IconButton(
             tooltip: 'Гарах',
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: () async {
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
+                  insetPadding: EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 12,
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 6,
+                  ),
                   title: const Text('Гарах уу?'),
                   content: const Text(
                     'Та системээс гарахдаа итгэлтэй байна уу?',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   actions: [
                     TextButton(
@@ -67,6 +91,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       child: const Text('Болих'),
                     ),
                     FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.red,
+                      ),
                       onPressed: () => Navigator.pop(ctx, true),
                       child: const Text('Гарах'),
                     ),
@@ -76,7 +103,6 @@ class _ProfilePageState extends State<ProfilePage> {
               if (confirmed == true) {
                 await authService.value.signOut();
                 if (!context.mounted) return;
-                // Ensure we return to the Login page and clear stack
                 Navigator.of(
                   context,
                 ).pushNamedAndRemoveUntil('/login', (route) => false);
@@ -87,48 +113,181 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: _DoctorProfileHeader(
-              name: doctorSvc.profile.name,
-              title: doctorSvc.profile.title,
-              location: doctorSvc.profile.location,
-              phone: doctorSvc.profile.phone,
-              clinicName: doctorSvc.profile.clinicName,
-              imageAssetPath:
-                  doctorSvc.profile.photoPath ??
-                  'assets/images/ColoradoBusinessCenter.jpg',
-              isFileImage: doctorSvc.profile.photoPath != null,
-              onEdit: () => _openEditBottomSheet(context),
+          // Doctor Profile Section
+          GestureDetector(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DoctorDetailPage()),
+              );
+            },
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    theme.colorScheme.primary,
+                    theme.colorScheme.primary.withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 4),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 50,
+                          backgroundColor: Colors.white,
+                          backgroundImage: doctorSvc.profile.photoPath != null
+                              ? FileImage(File(doctorSvc.profile.photoPath!))
+                              : const AssetImage(
+                                      'assets/images/ColoradoBusinessCenter.jpg',
+                                    )
+                                    as ImageProvider,
+                          onBackgroundImageError: (_, __) {},
+                          // child: doctorSvc.profile.photoPath == null
+                          //     ? Icon(
+                          //         Icons.person,
+                          //         size: 50,
+                          //         color: theme.colorScheme.primary,
+                          //       )
+                          //     : null,
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.colorScheme.primary,
+                              width: 2,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.medical_services,
+                            size: 20,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Doctor Name
+                  Text(
+                    doctorSvc.profile.name.isNotEmpty
+                        ? doctorSvc.profile.name
+                        : 'Эмч',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  // View Details Text
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Дэлгэрэнгүй харах',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.9),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        size: 14,
+                        color: Colors.white.withOpacity(0.9),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
+          const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               onChanged: (value) => setState(() => _searchQuery = value),
               decoration: InputDecoration(
                 hintText: 'Нэр, РД, утас хайх...',
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: theme.colorScheme.surface,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
                 ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16),
               ),
             ),
           ),
+          const SizedBox(height: 12),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '${filteredPatients.length} өвчтөн',
+                  'Өвчтөнүүд',
                   style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${filteredPatients.length}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onPrimaryContainer,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -143,7 +302,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         Icon(
                           Icons.people_outline,
-                          size: 64,
+                          size: 80,
                           color: Colors.grey[300],
                         ),
                         const SizedBox(height: 16),
@@ -152,11 +311,21 @@ class _ProfilePageState extends State<ProfilePage> {
                               ? 'Өвчтөн олдсонгүй'
                               : 'Өвчтөн бүртгэлгүй байна',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
                             color: Colors.grey[600],
                           ),
                         ),
-                        SizedBox(height: 40),
+                        const SizedBox(height: 8),
+                        Text(
+                          _searchQuery.isNotEmpty
+                              ? 'Өөр нэр эсвэл РД-ээр хайж үзнэ үү'
+                              : 'Доорх товчийг дарж шинэ өвчтөн нэмнэ үү',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
+                        ),
                       ],
                     ),
                   )
@@ -170,19 +339,30 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(
+                            color: theme.colorScheme.outline.withOpacity(0.2),
+                          ),
+                        ),
                         child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           leading: CircleAvatar(
-                            radius: 24,
+                            radius: 28,
                             backgroundColor: theme.colorScheme.primary
                                 .withValues(alpha: 0.1),
                             child: Text(
                               patient.givenName.isNotEmpty
                                   ? patient.givenName[0].toUpperCase()
-                                  : 'P',
+                                  : 'П',
                               style: TextStyle(
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 18,
+                                fontSize: 20,
                               ),
                             ),
                           ),
@@ -193,14 +373,20 @@ class _ProfilePageState extends State<ProfilePage> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          subtitle: Text(
-                            '${patient.age} нас • ${patient.sex.name} • ${prescriptions.length} жор',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              '${patient.age} нас • ${patient.sex.name} • ${prescriptions.length} жор',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
                             ),
                           ),
-                          trailing: const Icon(Icons.chevron_right),
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            color: theme.colorScheme.outline,
+                          ),
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
@@ -214,7 +400,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     },
                   ),
           ),
-          SizedBox(height: 40),
         ],
       ),
       floatingActionButton: Padding(
@@ -229,454 +414,22 @@ class _ProfilePageState extends State<ProfilePage> {
               await context.read<PatientService>().savePatient(result);
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Өвчтөн бүртгэгдлээ')),
+                SnackBar(
+                  content: const Text('✓ Өвчтөн бүртгэгдлээ'),
+                  backgroundColor: Colors.green,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
               );
             }
           },
           icon: const Icon(Icons.person_add),
           label: const Text('Шинэ өвчтөн'),
+          elevation: 4,
         ),
       ),
-    );
-  }
-}
-
-class _DoctorProfileHeader extends StatelessWidget {
-  const _DoctorProfileHeader({
-    required this.name,
-    required this.title,
-    required this.location,
-    required this.phone,
-    required this.clinicName,
-    required this.imageAssetPath,
-    this.isFileImage = false,
-    this.onEdit,
-  });
-
-  final String name;
-  final String title;
-  final String location;
-  final String phone;
-  final String clinicName;
-  final String imageAssetPath;
-  final bool isFileImage;
-  final VoidCallback? onEdit;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(width: 64), // space for avatar below
-                  TextButton.icon(
-                    onPressed: onEdit,
-                    style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.onSurface,
-                      backgroundColor: theme.colorScheme.surface,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    icon: const Icon(Icons.edit, size: 16),
-                    label: const Text('Засах'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Drugs Management Button
-              const SizedBox(height: 16),
-              // Avatar centered with subtle white ring
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: CircleAvatar(
-                      radius: 40,
-                      backgroundColor: theme.colorScheme.primary.withValues(
-                        alpha: 0.1,
-                      ),
-                      backgroundImage: isFileImage
-                          ? FileImage(File(imageAssetPath)) as ImageProvider
-                          : AssetImage(imageAssetPath),
-                      onBackgroundImageError: (_, __) {},
-                    ),
-                  ),
-                  Positioned(
-                    right: -2,
-                    bottom: -2,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: CircleAvatar(
-                        radius: 10,
-                        backgroundColor: Colors.green,
-                        child: const Icon(
-                          Icons.medical_services,
-                          size: 14,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                title,
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.location_on,
-                    size: 16,
-                    color: Colors.black54,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    location,
-                    style: const TextStyle(fontSize: 13, color: Colors.black54),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              if (clinicName.isNotEmpty)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.local_hospital,
-                      size: 16,
-                      color: Colors.black54,
-                    ),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        clinicName,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.black54,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              if (phone.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.phone, size: 16, color: Colors.black54),
-                    const SizedBox(width: 4),
-                    Text(
-                      phone,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.black54,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const DrugsManagementPage(),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.medication, size: 18),
-                  label: const Text('Эмийн жагсаалт'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-extension on _ProfilePageState {
-  Future<void> _openEditBottomSheet(BuildContext context) async {
-    final doctorSvc = context.read<DoctorProfileService>();
-    final profile = doctorSvc.profile;
-    final nameController = TextEditingController(text: profile.name);
-    final titleController = TextEditingController(text: profile.title);
-    final locationController = TextEditingController(text: profile.location);
-    final phoneController = TextEditingController(text: profile.phone);
-    final clinicController = TextEditingController(text: profile.clinicName);
-    String? tempPhotoPath = profile.photoPath;
-    String? tempSignaturePath = profile.signaturePath;
-
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        final bottomPadding = MediaQuery.of(ctx).viewInsets.bottom;
-        return Padding(
-          padding: EdgeInsets.only(bottom: bottomPadding),
-          child: StatefulBuilder(
-            builder: (ctx, setModalState) => SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          CircleAvatar(
-                            radius: 36,
-                            backgroundImage: tempPhotoPath != null
-                                ? FileImage(File(tempPhotoPath!))
-                                : const AssetImage(
-                                        'assets/images/ColoradoBusinessCenter.jpg',
-                                      )
-                                      as ImageProvider,
-                          ),
-                          Positioned(
-                            bottom: -4,
-                            right: -4,
-                            child: IconButton.filled(
-                              onPressed: () async {
-                                final picker = ImagePicker();
-                                final picked = await picker.pickImage(
-                                  source: ImageSource.gallery,
-                                  maxWidth: 1024,
-                                );
-                                if (picked != null) {
-                                  // Persist a copy via service
-                                  final saved = await doctorSvc.savePickedImage(
-                                    File(picked.path),
-                                  );
-                                  if (saved != null) {
-                                    setModalState(() => tempPhotoPath = saved);
-                                  }
-                                }
-                              },
-                              icon: const Icon(Icons.camera_alt, size: 18),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Профайл зураг',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Нэр',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Албан тушаал',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: locationController,
-                    decoration: const InputDecoration(
-                      labelText: 'Байршил',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: clinicController,
-                    decoration: const InputDecoration(
-                      labelText: 'Эмнэлэг/байгууллагын нэр',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: phoneController,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Утасны дугаар',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Эмчийн гарын үсэг (зураг)',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Container(
-                        width: 120,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: tempSignaturePath == null
-                            ? Center(
-                                child: Text(
-                                  'Байхгүй',
-                                  style: TextStyle(color: Colors.grey[600]),
-                                ),
-                              )
-                            : Image.file(
-                                File(tempSignaturePath!),
-                                fit: BoxFit.contain,
-                              ),
-                      ),
-                      const SizedBox(width: 12),
-                      OutlinedButton.icon(
-                        onPressed: () async {
-                          final picker = ImagePicker();
-                          final picked = await picker.pickImage(
-                            source: ImageSource.gallery,
-                            maxWidth: 1024,
-                          );
-                          if (picked != null) {
-                            final saved = await doctorSvc.savePickedImage(
-                              File(picked.path),
-                            );
-                            if (saved != null) {
-                              setModalState(() => tempSignaturePath = saved);
-                            }
-                          }
-                        },
-                        icon: const Icon(Icons.border_color),
-                        label: const Text('Гарын үсэг сонгох'),
-                      ),
-                      const SizedBox(width: 8),
-                      if (tempSignaturePath != null)
-                        TextButton(
-                          onPressed: () =>
-                              setModalState(() => tempSignaturePath = null),
-                          child: const Text('Цэвэрлэх'),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        child: const Text('Болих'),
-                      ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: () async {
-                          final updated = DoctorProfile(
-                            name: nameController.text.trim(),
-                            title: titleController.text.trim(),
-                            location: locationController.text.trim(),
-                            photoPath: tempPhotoPath,
-                            phone: phoneController.text.trim(),
-                            clinicName: clinicController.text.trim(),
-                            signaturePath: tempSignaturePath,
-                          );
-                          await doctorSvc.updateProfile(updated);
-                          if (mounted) Navigator.pop(ctx);
-                        },
-                        child: const Text('Хадгалах'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }

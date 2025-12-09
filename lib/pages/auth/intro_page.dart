@@ -16,12 +16,12 @@ class _IntroPageState extends State<IntroPage> {
 
   final List<Map<String, dynamic>> _pages = [
     {
-      'title': 'Med App-д тавтай морил!',
+      'title': 'MediScript-д тавтай морил!',
       'description':
-          'Хүүхдийн эмийн тунг алдаагүй, шууд тооцоолно. Эмч, эмнэлгийн мэргэжилтнүүдэд зориулав.',
+          'Эмийн жор бичих ухаалаг систем. Эмч, эмнэлгийн мэргэжилтнүүдэд зориулав.',
       'image': 'assets/images/intro1.png',
       'icon': Icons.medical_services_outlined,
-      'color': const Color(0xFF00B8A9), // Teal/Accent from main.dart
+      'color': const Color(0xFF00B8A9),
     },
     {
       'title': 'Ухаалаг тооцоолол',
@@ -71,10 +71,9 @@ class _IntroPageState extends State<IntroPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // Page View
           PageView.builder(
             controller: _pageController,
             onPageChanged: (index) => setState(() => _currentPage = index),
@@ -84,7 +83,6 @@ class _IntroPageState extends State<IntroPage> {
             },
           ),
 
-          // Skip Button (Top Right)
           Positioned(
             top: 50,
             right: 20,
@@ -96,7 +94,9 @@ class _IntroPageState extends State<IntroPage> {
                 child: TextButton(
                   onPressed: _goToLogin,
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.grey[600],
+                    foregroundColor: Theme.of(
+                      context,
+                    ).colorScheme.onBackground.withOpacity(0.6),
                   ),
                   child: const Text(
                     'Алгасах',
@@ -107,14 +107,12 @@ class _IntroPageState extends State<IntroPage> {
             ),
           ),
 
-          // Bottom Controls
           Positioned(
             bottom: 40,
             left: 20,
             right: 20,
             child: Column(
               children: [
-                // Page Indicator
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(
@@ -127,15 +125,16 @@ class _IntroPageState extends State<IntroPage> {
                       decoration: BoxDecoration(
                         color: _currentPage == index
                             ? _pages[_currentPage]['color']
-                            : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
+                            : Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(6),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 32),
 
-                // Main Button
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -143,14 +142,12 @@ class _IntroPageState extends State<IntroPage> {
                     onPressed: _nextPage,
                     child: ElevatedButton(
                       onPressed: _nextPage,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _pages[_currentPage]['color'],
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 2,
-                      ),
+                      style: Theme.of(context).elevatedButtonTheme.style
+                          ?.copyWith(
+                            backgroundColor: WidgetStateProperty.all(
+                              _pages[_currentPage]['color'],
+                            ),
+                          ),
                       child: Text(
                         _currentPage == _pages.length - 1 ? 'Эхлэх' : 'Дараах',
                         style: const TextStyle(
@@ -179,7 +176,6 @@ class _IntroPageContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Top Image Section with Curved Background
         Expanded(
           flex: 3,
           child: Container(
@@ -194,7 +190,6 @@ class _IntroPageContent extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                // Blurred glow background behind image
                 Positioned.fill(
                   child: Center(
                     child: ImageFiltered(
@@ -234,7 +229,6 @@ class _IntroPageContent extends StatelessWidget {
           ),
         ),
 
-        // Text Content
         Expanded(
           flex: 2,
           child: Padding(
@@ -263,7 +257,7 @@ class _IntroPageContent extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 100), // Space for bottom controls
+        const SizedBox(height: 100),
       ],
     );
   }

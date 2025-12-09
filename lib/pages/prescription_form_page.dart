@@ -393,9 +393,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
                         controller: _regNoCtrl,
                         decoration: const InputDecoration(
                           labelText: 'Регистрийн дугаар (РД)',
-                          border: OutlineInputBorder(),
-                          filled: true,
-                          fillColor: Colors.white,
                         ),
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) return 'РД заавал';
@@ -407,9 +404,6 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
                         controller: _phoneCtrl,
                         decoration: const InputDecoration(
                           labelText: 'Утасны дугаар',
-                          border: OutlineInputBorder(),
-                          filled: true,
-                          fillColor: Colors.white,
                         ),
                         keyboardType: TextInputType.phone,
                         validator: (v) {
@@ -423,12 +417,7 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: _addressCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Хаяг',
-                          border: OutlineInputBorder(),
-                          filled: true,
-                          fillColor: Colors.white,
-                        ),
+                        decoration: const InputDecoration(labelText: 'Хаяг'),
                         validator: (v) {
                           if (v == null || v.trim().isEmpty)
                             return 'Хаяг заавал';
@@ -442,10 +431,7 @@ class _PrescriptionFormPageState extends State<PrescriptionFormPage> {
               ],
 
               InputDecorator(
-                decoration: const InputDecoration(
-                  labelText: 'Жорын төрөл',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(labelText: 'Жорын төрөл'),
                 child: Wrap(
                   spacing: 8,
                   children: [
