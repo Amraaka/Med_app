@@ -130,7 +130,6 @@ class DrugInput extends StatefulWidget {
   State<DrugInput> createState() => _DrugInputState();
 }
 
-// Singleton cache for drug catalog shared across all DrugInput instances
 class _DrugCatalogCache {
   static _DrugCatalogCache? _instance;
   static _DrugCatalogCache get instance => _instance ??= _DrugCatalogCache._();
@@ -317,14 +316,12 @@ class _DrugInputState extends State<DrugInput> {
                         return const Iterable<Drug>.empty();
                       }
 
-                      // Fast filtering with early exit
                       final qLower = q.toLowerCase();
                       final results = <Drug>[];
                       final seen = <String>{};
 
                       for (final drug in _catalog) {
-                        if (results.length >= 20)
-                          break; // Early exit when we have enough
+                        if (results.length >= 20) break;
 
                         if (drug.mongolianName.isEmpty) continue;
 
@@ -336,7 +333,6 @@ class _DrugInputState extends State<DrugInput> {
                         final form = drug.form.toLowerCase();
                         final dose = drug.dose.toLowerCase();
 
-                        // Check for match
                         if (name.contains(qLower) ||
                             form.contains(qLower) ||
                             dose.contains(qLower)) {

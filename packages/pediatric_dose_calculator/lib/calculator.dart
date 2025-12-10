@@ -1,17 +1,13 @@
 import 'dart:math' as math;
 
-/// Main calculator for pediatric medication doses using Young's Rule
+/// medication doses using Young's Rule
 class PediatricDoseCalculator {
-  /// Calculate pediatric dose based on age using Young's Rule
-  ///
-  /// Formula: (Age in years / (Age + 12)) * Adult dose
   static double calculateByAge(int ageInYears, double adultDose) {
     if (ageInYears >= 18) return adultDose;
     if (ageInYears <= 0) return 0;
     return (ageInYears / (ageInYears + 12)) * adultDose;
   }
 
-  /// Format dose for display, removing unnecessary decimals
   static String formatDose(double dose) {
     if (dose == dose.roundToDouble()) {
       return dose.toInt().toString();
@@ -19,7 +15,6 @@ class PediatricDoseCalculator {
     return dose.toStringAsFixed(1);
   }
 
-  /// Calculate dose with warnings for age-specific concerns
   static PediatricDoseResult calculateDose({
     required int ageInYears,
     required double adultDose,
@@ -42,7 +37,6 @@ class PediatricDoseCalculator {
   }
 }
 
-/// Result of pediatric dose calculation
 class PediatricDoseResult {
   final double pediatricDose;
   final String formattedDose;
@@ -55,11 +49,9 @@ class PediatricDoseResult {
   });
 }
 
-/// Advanced calculator with multiple medical formulas
 class AdvancedPediatricDoseCalculator {
   static const double standardAdultWeight = 70.0;
 
-  /// Parse dose string into numeric value and unit
   static ({double? value, String unit}) parseDose(String doseString) {
     if (doseString.trim().isEmpty) {
       return (value: null, unit: '');
@@ -89,29 +81,25 @@ class AdvancedPediatricDoseCalculator {
     return (value: value, unit: unit);
   }
 
-  /// Clark's Rule: based on weight
-  /// Formula: (Child weight / 70 kg) * Adult dose
+  /// Clark's Rule
   static double clarksRule(double adultDose, double childWeightKg) {
     if (childWeightKg <= 0 || adultDose <= 0) return 0;
     return (childWeightKg / standardAdultWeight) * adultDose;
   }
 
   /// Young's Rule: based on age
-  /// Formula: (Age / (Age + 12)) * Adult dose
   static double youngsRule(double adultDose, int ageYears) {
     if (ageYears <= 0 || adultDose <= 0) return 0;
     return (ageYears / (ageYears + 12)) * adultDose;
   }
 
   /// Fried's Rule: for infants under 2 years
-  /// Formula: (Age in months / 150) * Adult dose
   static double friedsRule(double adultDose, int ageMonths) {
     if (ageMonths <= 0 || adultDose <= 0) return 0;
     return (ageMonths / 150.0) * adultDose;
   }
 
   /// BSA Method: Body Surface Area method (most accurate)
-  /// Uses Mosteller formula for BSA calculation
   static double bsaMethod(
     double adultDose,
     double childWeightKg,
@@ -123,7 +111,6 @@ class AdvancedPediatricDoseCalculator {
     return (childBSA / adultBSA) * adultDose;
   }
 
-  /// Calculate pediatric dose using multiple methods
   static DoseCalculationResult calculatePediatricDose({
     required String adultDoseString,
     required int childAgeYears,
@@ -285,7 +272,6 @@ class AdvancedPediatricDoseCalculator {
   }
 }
 
-/// Result from advanced dose calculation with multiple methods
 class DoseCalculationResult {
   final double calculatedDose;
   final double calculatedDoseMin;

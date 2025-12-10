@@ -216,7 +216,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 4),
-                  // View Details Text
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
