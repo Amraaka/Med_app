@@ -29,7 +29,7 @@ class _IntroPageState extends State<IntroPage> {
           'Жин, насанд тулгуурласан, нотолгоонд суурилсан тунг шууд санал болгоно.',
       'image': 'assets/images/intro2.png',
       'icon': Icons.psychology_outlined,
-      'color': const Color(0xFF5C6BC0), // Indigo
+      'color': const Color(0xFF5C6BC0),
     },
     {
       'title': 'Аюулгүй, найдвартай',
@@ -37,7 +37,7 @@ class _IntroPageState extends State<IntroPage> {
           'Өвчтөний өгөгдлийг байгууллагын түвшний хамгаалалт, шифрлэлтээр найдвартай хадгална.',
       'image': 'assets/images/intro3.png',
       'icon': Icons.security_outlined,
-      'color': const Color(0xFFEF5350), // Red
+      'color': const Color(0xFFEF5350),
     },
   ];
 

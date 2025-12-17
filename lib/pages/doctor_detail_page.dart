@@ -5,14 +5,21 @@ import 'package:image_picker/image_picker.dart';
 import '../models.dart';
 import '../services.dart';
 
-class DoctorDetailPage extends StatelessWidget {
+class DoctorDetailPage extends StatefulWidget {
   const DoctorDetailPage({super.key});
 
   @override
+  State<DoctorDetailPage> createState() => _DoctorDetailPageState();
+}
+
+class _DoctorDetailPageState extends State<DoctorDetailPage> {
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final doctorSvc = context.watch<DoctorProfileService>();
-    final profile = doctorSvc.profile;
+    // Use read() + select() to only rebuild when profile actually changes
+    final profile = context.select<DoctorProfileService, DoctorProfile>(
+      (service) => service.profile,
+    );
 
     return Scaffold(
       appBar: AppBar(
